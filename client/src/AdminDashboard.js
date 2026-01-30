@@ -7,7 +7,7 @@ const AdminDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [filter, setFilter] = useState("All");
 
-  // 1. USE YOUR IP ADDRESS (So Supervisor can access it)
+  // 1. USE YOUR ONLINE SERVER URL
   const API_URL = "https://cothm-research-portal.onrender.com/api/admin";
 
   useEffect(() => {
@@ -34,6 +34,16 @@ const AdminDashboard = () => {
     } catch (error) {
         alert("Update failed");
     }
+  };
+
+  // Helper to fix the Cloudinary Link
+  const getSafeFileUrl = (url) => {
+    if (!url) return "#";
+    // If it's a local test file (broken), just return it (it won't work, but prevents crash)
+    if (url.startsWith("/uploads")) return url;
+    
+    // FIX: Force Cloudinary to treat file as a Raw Document (PDF/Docx) instead of an Image
+    return url.replace("/image/upload/", "/raw/upload/");
   };
 
   // Filter Logic
@@ -94,79 +104,88 @@ const AdminDashboard = () => {
                         {filteredProjects.length === 0 ? (
                             <tr><td colSpan="6" className="text-center p-5 text-white-50">No submissions found.</td></tr>
                         ) : (
-                            filteredProjects.map((p) => (
-                            <tr key={p._id} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
-                                
-                                {/* STUDENT INFO */}
-                                <td className="p-3">
-                                    <div className="d-flex align-items-center gap-3">
-                                        <div className="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style={{width:'40px', height:'40px'}}>
-                                            <FaUserGraduate className="text-white" />
+                            filteredProjects.map((p) => {
+                                // Get the latest submission
+                                const latestSubmission = p.submissions.length > 0 ? p.submissions[p.submissions.length - 1] : null;
+
+                                return (
+                                <tr key={p._id} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+                                    
+                                    {/* STUDENT INFO */}
+                                    <td className="p-3">
+                                        <div className="d-flex align-items-center gap-3">
+                                            <div className="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style={{width:'40px', height:'40px'}}>
+                                                <FaUserGraduate className="text-white" />
+                                            </div>
+                                            <div>
+                                                <div className="fw-bold text-white">{p.studentName}</div>
+                                                <div className="small text-white-50">{p.studentEmail}</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div className="fw-bold text-white">{p.studentName}</div>
-                                            <div className="small text-white-50">{p.studentEmail}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                
-                                {/* BATCH INFO */}
-                                <td className="p-3">
-                                    <span className="badge bg-light text-dark mb-1">{p.program || "N/A"}</span>
-                                    <div className="small text-gold font-monospace">{p.regNumber || "---"}</div>
-                                </td>
-                                
-                                {/* FILE DOWNLOAD */}
-                                <td className="p-3">
-                                    {p.submissions.length > 0 ? (
-                                        <a 
-                                            href={p.submissions[p.submissions.length - 1].fileUrl} 
-                                            target="_blank" 
-                                            rel="noreferrer"
-                                            className="btn btn-sm btn-warning d-flex align-items-center gap-2 text-dark fw-bold"
-                                            style={{width: 'fit-content'}}
+                                    </td>
+                                    
+                                    {/* BATCH INFO */}
+                                    <td className="p-3">
+                                        <span className="badge bg-light text-dark mb-1">{p.program || "N/A"}</span>
+                                        <div className="small text-gold font-monospace">{p.regNumber || "---"}</div>
+                                    </td>
+                                    
+                                    {/* FILE DOWNLOAD */}
+                                    <td className="p-3">
+                                        {latestSubmission ? (
+                                            latestSubmission.fileUrl.startsWith("/uploads") ? (
+                                                <span className="text-danger small">Broken Link (Old Upload)</span>
+                                            ) : (
+                                                <a 
+                                                    href={getSafeFileUrl(latestSubmission.fileUrl)} 
+                                                    target="_blank" 
+                                                    rel="noreferrer"
+                                                    className="btn btn-sm btn-warning d-flex align-items-center gap-2 text-dark fw-bold"
+                                                    style={{width: 'fit-content'}}
+                                                >
+                                                    <FaFilePdf /> View PDF
+                                                </a>
+                                            )
+                                        ) : <span className="text-white-50 fst-italic">No File</span>}
+                                    </td>
+
+                                    {/* DATE */}
+                                    <td className="p-3 text-white-50 small">
+                                        {latestSubmission && latestSubmission.submittedAt
+                                            ? new Date(latestSubmission.submittedAt).toLocaleDateString() 
+                                            : "Just Now"}
+                                    </td>
+
+                                    {/* STATUS */}
+                                    <td className="p-3">
+                                        <span className={`badge ${
+                                            p.status === 'Approved' ? 'bg-success' : 
+                                            p.status === 'Rejected' ? 'bg-danger' : 'bg-info text-dark'
+                                        }`}>
+                                            {p.status}
+                                        </span>
+                                    </td>
+
+                                    {/* ACTIONS */}
+                                    <td className="p-3 text-end">
+                                        <button 
+                                            className="btn btn-outline-success btn-sm me-2" 
+                                            title="Approve"
+                                            onClick={() => handleUpdate(p.studentEmail, "Approved")}
                                         >
-                                            <FaFilePdf /> View PDF
-                                        </a>
-                                    ) : <span className="text-white-50 fst-italic">No File</span>}
-                                </td>
-
-                                {/* DATE (Fixed Logic) */}
-                                <td className="p-3 text-white-50 small">
-                                    {p.submissions.length > 0 && p.submissions[p.submissions.length - 1].submittedAt
-                                        ? new Date(p.submissions[p.submissions.length - 1].submittedAt).toLocaleDateString() 
-                                        : "Just Now"}
-                                </td>
-
-                                {/* STATUS */}
-                                <td className="p-3">
-                                    <span className={`badge ${
-                                        p.status === 'Approved' ? 'bg-success' : 
-                                        p.status === 'Rejected' ? 'bg-danger' : 'bg-info text-dark'
-                                    }`}>
-                                        {p.status}
-                                    </span>
-                                </td>
-
-                                {/* ACTIONS */}
-                                <td className="p-3 text-end">
-                                    <button 
-                                        className="btn btn-outline-success btn-sm me-2" 
-                                        title="Approve"
-                                        onClick={() => handleUpdate(p.studentEmail, "Approved")}
-                                    >
-                                        <FaCheck />
-                                    </button>
-                                    <button 
-                                        className="btn btn-outline-danger btn-sm" 
-                                        title="Reject"
-                                        onClick={() => handleUpdate(p.studentEmail, "Rejected")}
-                                    >
-                                        <FaTimes />
-                                    </button>
-                                </td>
-                            </tr>
-                            ))
+                                            <FaCheck />
+                                        </button>
+                                        <button 
+                                            className="btn btn-outline-danger btn-sm" 
+                                            title="Reject"
+                                            onClick={() => handleUpdate(p.studentEmail, "Rejected")}
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    </td>
+                                </tr>
+                                )
+                            })
                         )}
                         </tbody>
                     </table>

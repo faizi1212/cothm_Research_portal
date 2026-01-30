@@ -1,25 +1,51 @@
-/* GLOBAL SETTINGS */
+/* =========================================
+   1. GLOBAL & SCROLLBAR SETTINGS (NEW)
+   ========================================= */
 body {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow-x: hidden;
-  background-color: #0f2027; /* Fallback color if video fails */
+  background-color: #121212; /* Deep Dark Background for Dashboard */
+  color: #fff;
 }
 
-/* 1. VIDEO BACKGROUND CONTAINER */
+/* Custom "Gold" Scrollbar for Chrome/Edge/Safari */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 5px;
+  border: 2px solid #1e1e1e; /* Creates a nice padding effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37; /* Turns Gold on Hover */
+}
+
+/* =========================================
+   2. VIDEO BACKGROUND (Login/Signup)
+   ========================================= */
 .video-bg {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Ensures video fills screen without stretching */
-  z-index: -1;       /* Puts video behind everything */
-  filter: brightness(0.4); /* Darkens video so text is readable */
+  object-fit: cover;
+  z-index: -1;
+  filter: brightness(0.4);
 }
 
-/* 2. AUTH WRAPPER (Centers the login/signup card) */
+/* =========================================
+   3. AUTH CARD DESIGN (Glassmorphism)
+   ========================================= */
 .auth-wrapper {
   min-height: 100vh;
   display: flex;
@@ -28,11 +54,9 @@ body {
   padding: 20px;
 }
 
-/* 3. GLASS CARD DESIGN */
 .auth-card {
-  /* Semi-transparent Dark Blue (Glass Effect) */
   background: rgba(20, 30, 48, 0.85); 
-  backdrop-filter: blur(10px); /* Blurs the video behind the card */
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
@@ -46,7 +70,6 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* HEADER SECTION */
 .auth-header {
   background: transparent;
   padding: 40px 20px 20px;
@@ -54,7 +77,9 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* GOLD TYPOGRAPHY (Shining Text) */
+/* =========================================
+   4. TYPOGRAPHY & GOLD EFFECTS
+   ========================================= */
 .cothm-title {
   color: #fff;
   font-size: 1.8rem;
@@ -62,7 +87,6 @@ body {
   letter-spacing: 2px;
   margin-bottom: 5px;
   text-transform: uppercase;
-  /* Shining Gold Effect */
   background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -89,12 +113,18 @@ body {
   letter-spacing: 1px;
 }
 
-/* INPUT FIELDS (Dark Theme) */
+.text-gold {
+  color: #d4af37 !important;
+}
+
+/* =========================================
+   5. FORM INPUTS (Dark Theme)
+   ========================================= */
 .input-group-text {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-right: none;
-  color: #d4af37; /* Gold Icon */
+  color: #d4af37;
 }
 
 .form-control, .form-select {
@@ -106,6 +136,7 @@ body {
 }
 
 .form-control::placeholder { color: rgba(255, 255, 255, 0.5); }
+
 .form-control:focus, .form-select:focus {
   background: rgba(255, 255, 255, 0.2);
   box-shadow: none;
@@ -113,15 +144,16 @@ body {
   color: white;
 }
 
-/* Select Dropdown options need to be dark */
 .form-select option {
-    background-color: #1a2a3a;
-    color: white;
+  background-color: #1a2a3a;
+  color: white;
 }
 
-/* BUTTONS */
+/* =========================================
+   6. BUTTONS
+   ========================================= */
 .btn-cothm {
-  background: linear-gradient(45deg, #d4af37, #aa771c); /* Gold Gradient */
+  background: linear-gradient(45deg, #d4af37, #aa771c);
   color: #000;
   font-weight: 700;
   padding: 12px;
@@ -144,30 +176,42 @@ body {
 }
 .link-cothm:hover { text-decoration: underline; color: #fff; }
 
-/* --- DASHBOARD SPECIFIC STYLES --- */
-/* (These ensure the student panel looks good too) */
-
+/* =========================================
+   7. DASHBOARD SPECIFIC STYLES (NEW)
+   ========================================= */
 .dashboard-container {
-    min-height: 100vh;
-    /* Uses the video-bg class instead of a gradient, but this is a fallback */
-    background: transparent; 
-    padding-top: 20px;
+  min-height: 100vh;
+  padding-top: 20px;
+  /* Dark background is handled by body, but this ensures fallback */
+  background-color: #121212; 
 }
 
-/* Gold Text Utility */
-.text-gold {
-    color: #d4af37 !important;
+/* Table Hover Effect - Makes rows light up slightly */
+.table-hover tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  transition: background-color 0.2s ease-in-out;
 }
 
 /* Navbar Tweaks */
 .navbar {
-    background: rgba(0, 0, 0, 0.85) !important;
-    border-bottom: 1px solid #d4af37;
-    backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.85) !important;
+  border-bottom: 1px solid #d4af37;
+  backdrop-filter: blur(5px);
 }
 
 .navbar-brand {
-    font-weight: 800;
-    letter-spacing: 1px;
-    color: #d4af37 !important;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #d4af37 !important;
+}
+
+/* Background for Dashboard (if not using video) */
+.dashboard-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-color: #121212; 
 }

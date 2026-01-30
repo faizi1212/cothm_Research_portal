@@ -1,0 +1,173 @@
+/* GLOBAL SETTINGS */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden;
+  background-color: #0f2027; /* Fallback color if video fails */
+}
+
+/* 1. VIDEO BACKGROUND CONTAINER */
+.video-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures video fills screen without stretching */
+  z-index: -1;       /* Puts video behind everything */
+  filter: brightness(0.4); /* Darkens video so text is readable */
+}
+
+/* 2. AUTH WRAPPER (Centers the login/signup card) */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* 3. GLASS CARD DESIGN */
+.auth-card {
+  /* Semi-transparent Dark Blue (Glass Effect) */
+  background: rgba(20, 30, 48, 0.85); 
+  backdrop-filter: blur(10px); /* Blurs the video behind the card */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  animation: floatUp 1s ease-out;
+  color: white;
+}
+
+@keyframes floatUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* HEADER SECTION */
+.auth-header {
+  background: transparent;
+  padding: 40px 20px 20px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* GOLD TYPOGRAPHY (Shining Text) */
+.cothm-title {
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  /* Shining Gold Effect */
+  background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: shine 4s linear infinite;
+}
+
+@keyframes shine {
+  to { background-position: 200% center; }
+}
+
+.cothm-subtitle {
+  color: #d4af37;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.portal-tagline {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+/* INPUT FIELDS (Dark Theme) */
+.input-group-text {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-right: none;
+  color: #d4af37; /* Gold Icon */
+}
+
+.form-control, .form-select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: none;
+  color: white;
+  padding: 12px;
+}
+
+.form-control::placeholder { color: rgba(255, 255, 255, 0.5); }
+.form-control:focus, .form-select:focus {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+  border-color: #d4af37;
+  color: white;
+}
+
+/* Select Dropdown options need to be dark */
+.form-select option {
+    background-color: #1a2a3a;
+    color: white;
+}
+
+/* BUTTONS */
+.btn-cothm {
+  background: linear-gradient(45deg, #d4af37, #aa771c); /* Gold Gradient */
+  color: #000;
+  font-weight: 700;
+  padding: 12px;
+  letter-spacing: 1px;
+  border: none;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.btn-cothm:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+  color: #000;
+}
+
+.link-cothm {
+  color: #d4af37;
+  text-decoration: none;
+  font-weight: 500;
+}
+.link-cothm:hover { text-decoration: underline; color: #fff; }
+
+/* --- DASHBOARD SPECIFIC STYLES --- */
+/* (These ensure the student panel looks good too) */
+
+.dashboard-container {
+    min-height: 100vh;
+    /* Uses the video-bg class instead of a gradient, but this is a fallback */
+    background: transparent; 
+    padding-top: 20px;
+}
+
+/* Gold Text Utility */
+.text-gold {
+    color: #d4af37 !important;
+}
+
+/* Navbar Tweaks */
+.navbar {
+    background: rgba(0, 0, 0, 0.85) !important;
+    border-bottom: 1px solid #d4af37;
+    backdrop-filter: blur(5px);
+}
+
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #d4af37 !important;
+}

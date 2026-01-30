@@ -1,3 +1,4 @@
+import UserDashboard from './UserDashboard';
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { auth, signOut } from "./firebase";
@@ -142,6 +143,7 @@ function App() {
         <Route path="/" element={user ? <StudentDashboard user={user} /> : <Navigate to="/login" />} />
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
         <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/" />} />
+        <Route path="/dashboard" element={<UserDashboard />} />
         
         {/* 🔐 SECURE ADMIN ROUTE */}
         <Route path="/admin" element={

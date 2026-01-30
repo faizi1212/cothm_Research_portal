@@ -7,7 +7,7 @@ const AdminDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [filter, setFilter] = useState("All");
 
-  // 1. USE YOUR ONLINE SERVER URL
+  // 1. YOUR ONLINE SERVER URL
   const API_URL = "https://cothm-research-portal.onrender.com/api/admin";
 
   useEffect(() => {
@@ -36,14 +36,14 @@ const AdminDashboard = () => {
     }
   };
 
-  // Helper to fix the Cloudinary Link
+  // Helper to handle links (Clean Version)
   const getSafeFileUrl = (url) => {
     if (!url) return "#";
-    // If it's a local test file (broken), just return it (it won't work, but prevents crash)
+    // If it's a local test file (old broken upload), return as is
     if (url.startsWith("/uploads")) return url;
     
-    // FIX: Force Cloudinary to treat file as a Raw Document (PDF/Docx) instead of an Image
-    return url.replace("/image/upload/", "/raw/upload/");
+    // Server now handles "auto" detection, so we use the URL exactly as Cloudinary gives it.
+    return url; 
   };
 
   // Filter Logic

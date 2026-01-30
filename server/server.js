@@ -29,12 +29,12 @@ cloudinary.config({
 
 // 3. SETUP STORAGE ENGINE
 const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'thesis-portal', // This folder will appear in your Cloudinary Dashboard
-        allowed_formats: ['pdf', 'doc', 'docx'],
-        resource_type: 'auto'
-    }
+  cloudinary: cloudinary,
+  params: {
+    folder: "thesis-portal",
+    allowed_formats: ["jpg", "png", "jpeg", "pdf", "docx", "doc"],
+    resource_type: "auto", // <--- THIS FIXES THE PDF PROBLEM
+  },
 });
 
 const upload = multer({ storage: storage });

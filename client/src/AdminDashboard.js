@@ -8,7 +8,7 @@ const AdminDashboard = () => {
   const [filter, setFilter] = useState("All");
 
   // 1. USE YOUR IP ADDRESS (So Supervisor can access it)
-  const API_URL = "http://192.168.18.131:5000/api/admin";
+  const API_URL = "https://cothm-research-portal.onrender.com/api/admin";
 
   useEffect(() => {
     fetchProjects();

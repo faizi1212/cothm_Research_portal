@@ -40,9 +40,9 @@ const StudentDashboard = ({ user }) => {
 
     const fetchData = async (email) => {
         try {
-            const sRes = await axios.get(`http://192.168.18.131:5000/api/status/${email}`);
+            const sRes = await axios.get(`https://cothm-research-portal.onrender.com/api/status/${email}`);
             setStatus(sRes.data);
-            const pRes = await axios.get(`http://192.168.18.131:5000/api/profile/${email}`);
+            const pRes = await axios.get(`https://cothm-research-portal.onrender.com/api/profile/${email}`);
             setStudentProfile(pRes.data);
         } catch (err) { console.error(err); }
     };
@@ -57,7 +57,7 @@ const StudentDashboard = ({ user }) => {
         formData.append("stage", "Final Thesis");
 
         try {
-            await axios.post("http://192.168.18.131:5000/api/submit", formData, {
+            await axios.post("https://cothm-research-portal.onrender.com/api/submit", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 onUploadProgress: (e) => setProgress(Math.round((e.loaded / e.total) * 100))
             });

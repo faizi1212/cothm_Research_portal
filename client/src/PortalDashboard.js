@@ -6,14 +6,20 @@ const PortalDashboard = () => {
   const [file, setFile] = useState(null);
   const [data, setData] = useState({ submissions: [], comments: [], status: "Not Started" });
   const [uploading, setUploading] = useState(false);
-  
   const API_URL = "https://cothm-research-portal.onrender.com";
+  
   const user = JSON.parse(localStorage.getItem("user"));
 
+  // --- SMART NAME DETECTOR ---
   const getDisplayName = () => {
     if (!user) return "Student";
-    if (user.firstName) return `${user.firstName} ${user.lastName || ""}`;
-    return user.email.split('@')[0];
+    // Check if First/Last name exist
+    if (user.firstName && user.firstName !== "undefined") return `${user.firstName} ${user.lastName || ""}`;
+    // Fallback to name field
+    if (user.name) return user.name;
+    // Fallback to Email (username part)
+    if (user.email) return user.email.split('@')[0];
+    return "Student";
   };
 
   if (!user) { window.location.href = "/"; return null; }
@@ -48,33 +54,28 @@ const PortalDashboard = () => {
     <div className="dashboard-container container">
       <div className="row justify-content-center">
         <div className="col-lg-10">
-          
-          {/* HEADER */}
           <div className="card-dashboard mb-4 p-5 text-center">
               <h1 className="fw-bold text-navy">Welcome, <span className="text-gold">{getDisplayName()}</span></h1>
               <div className="d-inline-block px-4 py-2 rounded-pill bg-light border border-warning mt-3">
-                <span className="fw-bold text-navy">Current Status: </span>
+                <span className="fw-bold text-navy">Status: </span>
                 <span className={`fw-bold ${data.status === 'Approved' ? 'text-success' : data.status === 'Rejected' ? 'text-danger' : 'text-warning'}`}>
                   {data.status.toUpperCase()}
                 </span>
               </div>
           </div>
 
-          {/* SUPERVISOR FEEDBACK SECTION (New) */}
+          {/* FEEDBACK SECTION */}
           {data.comments && data.comments.length > 0 && (
              <div className={`card mb-4 border-0 shadow-sm ${data.status === 'Rejected' ? 'bg-danger-subtle' : 'bg-light'}`}>
                  <div className="card-body p-4">
-                     <h5 className="card-title fw-bold text-navy border-bottom pb-2">
-                       <FaCommentDots className="me-2 text-warning"/> 
-                       Supervisor Feedback
-                     </h5>
+                     <h5 className="card-title fw-bold text-navy border-bottom pb-2"><FaCommentDots className="me-2 text-warning"/> Supervisor Feedback</h5>
                      <div className="mt-3">
                        {data.comments.slice().reverse().map((c, i) => (
                          <div key={i} className="d-flex align-items-start mb-3">
                            <FaInfoCircle className="mt-1 me-2 text-primary opacity-50"/>
                            <div>
                              <p className="mb-0 fw-bold text-dark">{c.text}</p>
-                             <small className="text-muted">{new Date(c.date).toLocaleDateString()} at {new Date(c.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                             <small className="text-muted">{new Date(c.date).toLocaleDateString()}</small>
                            </div>
                          </div>
                        ))}
@@ -90,9 +91,7 @@ const PortalDashboard = () => {
                 <div className="border border-2 border-light border-dashed rounded p-4 mb-3">
                    <input type="file" className="form-control" onChange={(e) => setFile(e.target.files[0])} />
                 </div>
-                <button className="btn-primary-custom" onClick={handleUpload} disabled={uploading}>
-                  {uploading ? "Uploading..." : "Upload Thesis"}
-                </button>
+                <button className="btn-primary-custom" onClick={handleUpload} disabled={uploading}>{uploading ? "Uploading..." : "Upload Thesis"}</button>
               </div>
             </div>
             <div className="col-md-6">

@@ -15,13 +15,24 @@ const Navbar = () => {
     navigate("/");
   };
 
-  // 2. Fix "Undefined" Name Issue
+  // 2. Fix "Undefined" Name Issue (IMPROVED)
   const getDisplayName = () => {
     if (!user) return "Guest";
-    // Check all possible database fields
-    if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
-    if (user.firstName) return user.firstName;
+    
+    // Priority 1: First + Last Name
+    if (user.firstName && user.lastName && user.firstName !== "undefined") {
+        return `${user.firstName} ${user.lastName}`;
+    }
+    // Priority 2: Just First Name
+    if (user.firstName && user.firstName !== "undefined") {
+        return user.firstName;
+    }
+    // Priority 3: 'name' field (older accounts)
     if (user.name) return user.name;
+    
+    // Priority 4: Username from Email (e.g. "admin" from admin@cothm...)
+    if (user.email) return user.email.split('@')[0];
+
     return "Student"; // Final fallback
   };
 
@@ -31,7 +42,7 @@ const Navbar = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark navbar-glass sticky-top py-3">
       <div className="container">
-        {/* BRAND */}
+        {/* BRAND - Clicking this goes to Login (which auto-redirects to Dashboard if logged in) */}
         <Link className="navbar-brand fw-bold d-flex align-items-center" to="/">
           <FaUserGraduate className="me-2 text-warning fs-3"/> 
           <span style={{letterSpacing: "1px"}}>COTHM <span className="text-info">PORTAL</span></span>

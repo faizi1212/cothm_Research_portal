@@ -31,7 +31,6 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected Successfully!"))
     .catch(err => {
         console.error("❌ MongoDB Connection Failed:", err.message);
-        // Do not exit, just log it so we see it in Render
     });
 
 // CLOUDINARY
@@ -77,21 +76,47 @@ const User = mongoose.model('User', UserSchema);
 
 // ROUTES
 
-// LOGIN ROUTE (With Debug Logs)
+// --- EMERGENCY ADMIN FIX ROUTE ---
+// Visit https://YOUR-RENDER-URL.com/api/fix-admin to reset admin account
+app.get('/api/fix-admin', async (req, res) => {
+    try {
+        const adminEmail = "admin@cothm.edu.pk";
+        console.log("🛠️ Starting Admin Fix...");
+
+        // 1. Delete old/broken admin
+        await User.deleteOne({ email: adminEmail });
+        console.log("🗑️ Deleted old admin (if any)");
+
+        // 2. Create fresh admin
+        const newAdmin = new User({
+            firstName: "Cothm",
+            lastName: "Admin",
+            email: adminEmail,
+            password: "admin123",
+            regNumber: "ADMIN001",
+            program: "Administration",
+            role: "admin"
+        });
+
+        await newAdmin.save();
+        console.log("✅ New Admin Created!");
+        res.send("✅ ADMIN FIXED! You can now login with: <br>Email: <b>admin@cothm.edu.pk</b> <br>Password: <b>admin123</b>");
+    } catch (err) {
+        console.error("❌ Admin Fix Failed:", err);
+        res.status(500).send("Error fixing admin: " + err.message);
+    }
+});
+
+// LOGIN ROUTE
 app.post('/login', async (req, res) => {
     console.log(`🔐 Login Attempt for email: ${req.body.email}`);
     
-    // Check DB State: 0=Disconnected, 1=Connected, 2=Connecting
     if (mongoose.connection.readyState !== 1) {
-        console.error("❌ DATABASE IS NOT CONNECTED. Login Aborted.");
-        return res.status(500).json({ error: "Database not connected. Check Server Logs." });
+        return res.status(500).json({ error: "Database not connected." });
     }
 
     try {
         const { email, password } = req.body;
-        
-        // Find User
-        console.log("🔍 Searching for user in DB...");
         const user = await User.findOne({ email });
         
         if (!user) {
@@ -99,7 +124,6 @@ app.post('/login', async (req, res) => {
             return res.status(400).json({ error: "Invalid Credentials" });
         }
 
-        console.log("✅ User Found. Checking Password...");
         if (user.password !== password) {
             console.log("⚠️ Wrong Password");
             return res.status(400).json({ error: "Invalid Credentials" });
@@ -115,7 +139,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// ADMIN ROUTES (Required for Supervisor)
+// ADMIN ROUTES
 app.post('/api/admin/update', async (req, res) => {
     try {
         console.log("🔄 Updating Status:", req.body.email);
@@ -145,12 +169,23 @@ app.get('/api/admin/projects', async (req, res) => {
     res.json(projects);
 });
 
-// OTHER ROUTES
+// REGISTER ROUTE (Fixed Duplicate Check)
 app.post('/api/register', async (req, res) => {
+    console.log("📝 Registration Attempt:", req.body.email);
     try {
+        const { email } = req.body;
+        const existing = await User.findOne({ email });
+        if (existing) {
+            console.log("⚠️ User already exists");
+            return res.status(400).json({ msg: "Account already exists! Please Login." });
+        }
         await User.create(req.body);
+        console.log("✅ User Created");
         res.json({ msg: "Success" });
-    } catch (err) { res.status(500).send("Error"); }
+    } catch (err) { 
+        console.error("❌ Register Error:", err);
+        res.status(500).send("Error: " + err.message); 
+    }
 });
 
 app.post('/api/submit', upload.single("file"), async (req, res) => {
@@ -174,5 +209,4 @@ app.get('/api/status/:email', async (req, res) => {
     res.json(p || { status: "Not Started", submissions: [], comments: [] });
 });
 
-// START SERVER
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

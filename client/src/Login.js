@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUser, FaLock, FaSignInAlt } from "react-icons/fa";
+import { FaUser, FaLock } from "react-icons/fa";
 
 const Login = () => {
   const [formData, setFormData] = useState({

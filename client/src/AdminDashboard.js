@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import './App.css';
 import { 
-  FaFilePdf, FaCheck, FaTimes, FaUserGraduate, FaSearch, FaFilter, FaClock, FaCheckCircle, FaTimesCircle 
+  FaFilePdf, FaSearch, FaClock, FaCheckCircle, FaTimesCircle 
 } from "react-icons/fa";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -16,6 +16,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProjects = async () => {

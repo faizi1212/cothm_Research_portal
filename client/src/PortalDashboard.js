@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaCloudUploadAlt, FaHistory, FaClock } from "react-icons/fa";
+import { FaCloudUploadAlt, FaHistory } from "react-icons/fa";
 
 const PortalDashboard = () => {
   // ✅ ALL HOOKS AT THE TOP FIRST
@@ -14,12 +14,25 @@ const PortalDashboard = () => {
   
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // ✅ useEffect MUST BE HERE - BEFORE ANY CONDITIONAL RETURNS
+  // ✅ useEffect with proper dependency handling
   useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/my-project?email=${user.email}`);
+        if (res.data) {
+            setSubmissions(res.data.submissions || []);
+            setProjectStatus(res.data.status || "Pending Review");
+        }
+      } catch (err) { 
+        console.log("No submissions found."); 
+      }
+    };
+
     if (user) {
       fetchSubmissions();
     }
-  }, [user]); // Added user to dependency array
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // ✅ NOW CONDITIONAL RETURNS ARE OK
   if (!user) {
@@ -32,18 +45,6 @@ const PortalDashboard = () => {
         </div>
       );
   }
-
-  const fetchSubmissions = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/my-project?email=${user.email}`);
-      if (res.data) {
-          setSubmissions(res.data.submissions || []);
-          setProjectStatus(res.data.status || "Pending Review");
-      }
-    } catch (err) { 
-      console.log("No submissions found."); 
-    }
-  };
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -64,7 +65,13 @@ const PortalDashboard = () => {
       });
       alert("✅ Upload Successful!");
       setFile(null);
-      fetchSubmissions();
+      
+      // Refresh submissions after upload
+      const res = await axios.get(`${API_URL}/my-project?email=${user.email}`);
+      if (res.data) {
+          setSubmissions(res.data.submissions || []);
+          setProjectStatus(res.data.status || "Pending Review");
+      }
     } catch (err) {
       alert("Upload Failed.");
     } finally {
@@ -109,22 +116,28 @@ const PortalDashboard = () => {
         <div className="mt-5">
             <h5 className="text-white"><FaHistory className="me-2"/> History</h5>
             <div className="list-group">
-                {submissions.slice().reverse().map((sub, index) => (
-                    <div 
-                        key={index} 
-                        className="list-group-item bg-dark text-white border-secondary d-flex justify-content-between p-3"
-                    >
-                        <span>Version {submissions.length - index}</span>
-                        <a 
-                            href={sub.fileUrl} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className="btn btn-sm btn-outline-light"
-                        >
-                            Download
-                        </a>
+                {submissions.length === 0 ? (
+                    <div className="list-group-item bg-dark text-white border-secondary text-center p-4">
+                        <span className="text-secondary">No submissions yet</span>
                     </div>
-                ))}
+                ) : (
+                    submissions.slice().reverse().map((sub, index) => (
+                        <div 
+                            key={index} 
+                            className="list-group-item bg-dark text-white border-secondary d-flex justify-content-between p-3"
+                        >
+                            <span>Version {submissions.length - index}</span>
+                            <a 
+                                href={sub.fileUrl} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="btn btn-sm btn-outline-light"
+                            >
+                                Download
+                            </a>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
       </div>

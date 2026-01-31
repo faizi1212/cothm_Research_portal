@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaCloudUploadAlt, FaHistory, FaClock, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
-const StudentDashboard = () => {
+// NAME CHANGED TO PortalDashboard TO FIX VERCEL
+const PortalDashboard = () => {
   const [file, setFile] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [projectStatus, setProjectStatus] = useState("Not Started");
@@ -195,4 +196,4 @@ const StudentDashboard = () => {
   );
 };
 
-export default StudentDashboard;
+export default PortalDashboard;

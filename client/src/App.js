@@ -8,21 +8,19 @@ import Navbar from "./Navbar";
 import Login from "./Login";
 import Signup from "./Signup";
 import AdminDashboard from "./AdminDashboard";
-import StudentDashboard from "./StudentDashboard"; // <--- Updated Name to match file
+import PortalDashboard from "./PortalDashboard"; // <--- NEW IMPORT
 
 function App() {
   return (
     <Router>
       <Navbar />
       <Routes>
-        {/* PUBLIC ROUTES */}
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* STUDENT ROUTE (Updated Component Name) */}
-        <Route path="/dashboard" element={<StudentDashboard />} />
+        {/* DASHBOARD ROUTE POINTS TO NEW FILE */}
+        <Route path="/dashboard" element={<PortalDashboard />} />
 
-        {/* ADMIN ROUTE */}
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </Router>

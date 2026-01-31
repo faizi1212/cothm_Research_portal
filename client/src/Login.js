@@ -1,77 +1,115 @@
-import React, { useState } from 'react';
-import { auth, signInWithEmailAndPassword } from './firebase';
-import { useNavigate, Link } from 'react-router-dom';
-import { FaLock, FaEnvelope } from 'react-icons/fa'; 
-import './App.css'; 
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { FaUser, FaLock, FaSignInAlt } from "react-icons/fa";
 
 const Login = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            navigate('/');
-        } catch (err) {
-            setError("Invalid Credentials.");
-        }
-    };
+  // ONLINE SERVER URL
+  const API_URL = "https://cothm-research-portal.onrender.com";
 
-    return (
-        <div>
-            {/* 🎥 BACKGROUND VIDEO */}
-            <video autoPlay loop muted className="video-bg">
-                {/* This is a high-quality Pexels Hospitality Video */}
-                <source src="https://videos.pexels.com/video-files/3196344/3196344-hd_1920_1080_25fps.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-            </video>
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-            <div className="auth-wrapper">
-                <div className="card auth-card col-md-4 col-sm-10 col-12">
-                    
-                    <div className="auth-header">
-                        <h1 className="cothm-title">COTHM INTERNATIONAL</h1>
-                        <span className="cothm-subtitle">Research Portal</span>
-                        <p className="portal-tagline text-white-50">Secure Academic Access</p>
-                    </div>
+  // TRIGGERED WHEN YOU CLICK LOGIN
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Stop page reload
+    console.log("Login Button Clicked!"); // <--- Check Console for this
+    
+    if(!formData.email || !formData.password) {
+        alert("Please fill in all fields");
+        return;
+    }
 
-                    <div className="card-body p-4">
-                        {error && <div className="alert alert-danger text-center small">{error}</div>}
+    setLoading(true);
 
-                        <form onSubmit={handleLogin}>
-                            <div className="input-group mb-4">
-                                <span className="input-group-text"><FaEnvelope size={18} /></span>
-                                <input 
-                                    type="email" className="form-control" placeholder="Student Email"
-                                    value={email} onChange={(e) => setEmail(e.target.value)} required 
-                                />
-                            </div>
+    try {
+      console.log("Sending request to:", `${API_URL}/login`);
+      const res = await axios.post(`${API_URL}/login`, formData);
+      
+      console.log("Response:", res.data);
+      alert("✅ Login Success! Redirecting...");
 
-                            <div className="input-group mb-4">
-                                <span className="input-group-text"><FaLock size={18} /></span>
-                                <input 
-                                    type="password" className="form-control" placeholder="Password"
-                                    value={password} onChange={(e) => setPassword(e.target.value)} required 
-                                />
-                            </div>
+      // Save user
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
-                            <button type="submit" className="btn btn-cothm w-100 rounded-pill mb-3">
-                                LOGIN TO PORTAL
-                            </button>
-                        </form>
+      // Redirect
+      if (res.data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
 
-                        <div className="text-center">
-                            <span className="text-white-50 small">New Student? </span>
-                            <Link to="/signup" className="link-cothm">Register Here</Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    } catch (err) {
+      console.error("Login Error:", err);
+      const msg = err.response ? err.response.data.error : "Server not responding";
+      alert("❌ Login Failed: " + msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-wrapper" style={{background: "#121212", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center"}}>
+      
+      {/* LOGIN CARD */}
+      <div className="card auth-card p-4" style={{ maxWidth: "450px", width: "100%", background: "#1e1e1e", border: "1px solid #333", color: "white" }}>
+        <div className="text-center mb-4">
+          <h2 className="text-warning fw-bold">COTHM PORTAL</h2>
+          <p className="text-secondary">Login to Continue</p>
         </div>
-    );
+
+        <form onSubmit={handleLogin}>
+          {/* Email */}
+          <div className="input-group mb-3">
+            <span className="input-group-text bg-dark border-secondary text-warning"><FaUser /></span>
+            <input 
+                type="email" 
+                name="email" 
+                className="form-control bg-dark text-white border-secondary" 
+                placeholder="Email Address" 
+                onChange={handleChange} 
+                required 
+            />
+          </div>
+
+          {/* Password */}
+          <div className="input-group mb-4">
+            <span className="input-group-text bg-dark border-secondary text-warning"><FaLock /></span>
+            <input 
+                type="password" 
+                name="password" 
+                className="form-control bg-dark text-white border-secondary" 
+                placeholder="Password" 
+                onChange={handleChange} 
+                required 
+            />
+          </div>
+
+          {/* LOGIN BUTTON */}
+          <button 
+            type="submit" 
+            className="btn btn-warning w-100 mb-3 fw-bold" 
+            disabled={loading}
+            style={{height: "50px"}}
+          >
+             {loading ? "Connecting..." : "LOGIN NOW"}
+          </button>
+
+          <div className="text-center">
+            <Link to="/signup" className="text-warning text-decoration-none">Create an Account</Link>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

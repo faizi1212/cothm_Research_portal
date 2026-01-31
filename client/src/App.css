@@ -1,128 +1,143 @@
-/* =========================================
-   1. GLOBAL STYLES (New Professional Theme)
-   ========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
-
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Poppins', sans-serif;
-  /* PROFESSIONAL CAMPUS BACKGROUND */
-  background: linear-gradient(rgba(0, 51, 102, 0.85), rgba(0, 30, 60, 0.9)), 
-              url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  color: #333;
-  min-height: 100vh;
-}
-
-/* =========================================
-   2. GLASS CARDS (White & Clean)
-   ========================================= */
-.auth-wrapper {
-  min-height: 100vh;
+/* --- MODERN AUTH SPLIT LAYOUT --- */
+.auth-page-wrapper {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.95); /* White, slightly see-through */
-  backdrop-filter: blur(20px);
-  border-radius: 15px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  padding: 40px;
-  width: 100%;
-  max-width: 450px;
-  border-top: 5px solid #d4af37; /* COTHM Gold Top Border */
-}
-
-/* =========================================
-   3. TYPOGRAPHY
-   ========================================= */
-h2, h3, h4 {
-  color: #003366; /* Deep Navy Blue */
-  font-weight: 800;
-}
-
-.text-gold { color: #d4af37 !important; }
-.text-navy { color: #003366 !important; }
-
-/* =========================================
-   4. FORM INPUTS (Clean White Theme)
-   ========================================= */
-.form-control, .form-select {
+  min-height: 100vh;
+  width: 100vw;
+  overflow: hidden;
   background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  color: #333;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 0.95rem;
 }
 
-.form-control:focus {
-  background: #fff;
-  border-color: #d4af37; /* Gold focus */
-  box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
-}
-
-/* =========================================
-   5. BUTTONS (Professional Gradient)
-   ========================================= */
-.btn-primary-custom {
-  background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%);
-  border: none;
+/* LEFT SIDE: Brand & Visuals */
+.auth-hero-section {
+  flex: 1;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   color: white;
-  font-weight: 700;
-  padding: 12px 25px;
-  border-radius: 8px;
-  letter-spacing: 1px;
-  transition: transform 0.2s;
-  width: 100%;
-}
-
-.btn-primary-custom:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
-  color: white;
-}
-
-/* =========================================
-   6. DASHBOARD STYLES
-   ========================================= */
-.dashboard-container {
-  padding-top: 30px;
-  padding-bottom: 50px;
-}
-
-.card-dashboard {
-  background: white;
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  padding: 40px;
+  position: relative;
   overflow: hidden;
 }
 
-.card-header-custom {
-  background: #003366;
-  color: white;
-  padding: 20px;
-  font-weight: 600;
+/* Animated Circles in Background */
+.auth-hero-section::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  background: rgba(255, 215, 0, 0.1); /* Gold tint */
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 10s infinite ease-in-out;
 }
 
-/* Navbar */
-.navbar-custom {
-  background: white !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.auth-hero-section::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: rgba(0, 123, 255, 0.1); /* Blue tint */
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 12s infinite ease-in-out reverse;
 }
 
-.nav-link {
-  color: #003366 !important;
-  font-weight: 600;
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
 }
 
-.nav-link.active {
-  color: #d4af37 !important;
+.hero-content {
+  z-index: 2;
+  text-align: center;
+  max-width: 500px;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: -webkit-linear-gradient(#eee, #aaa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* RIGHT SIDE: The Form */
+.auth-form-section {
+  flex: 0.8; /* Slightly smaller than hero */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  padding: 50px;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+  position: relative;
+}
+
+.auth-card-modern {
+  width: 100%;
+  max-width: 400px;
+  animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Floating Input Fields */
+.form-floating-custom {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.form-floating-custom input {
+  width: 100%;
+  padding: 15px 15px 15px 45px; /* Space for icon */
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  background: #f8f9fa;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-floating-custom input:focus {
+  border-color: #007bff;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
+  outline: none;
+}
+
+.field-icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  transition: color 0.3s;
+}
+
+.form-floating-custom input:focus + .field-icon,
+.form-floating-custom input:focus ~ .field-icon {
+  color: #007bff;
+}
+
+/* Responsive Mobile Check */
+@media (max-width: 900px) {
+  .auth-page-wrapper {
+    flex-direction: column;
+  }
+  .auth-hero-section {
+    flex: 0.3;
+    padding: 30px 20px;
+  }
+  .hero-title { font-size: 2rem; }
+  .auth-form-section { flex: 1; border-radius: 30px 30px 0 0; top: -20px; }
 }

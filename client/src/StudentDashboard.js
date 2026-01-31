@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaCloudUploadAlt, FaHistory, FaClock, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
-const UserDashboard = () => {
+const StudentDashboard = () => {
   const [file, setFile] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [projectStatus, setProjectStatus] = useState("Not Started");
@@ -13,6 +13,19 @@ const UserDashboard = () => {
   
   // Get logged in user from local storage
   const user = JSON.parse(localStorage.getItem("user"));
+
+  // 🔴 SAFETY CHECK: If no user is found, stop and ask them to login
+  if (!user) {
+      return (
+        <div className="d-flex justify-content-center align-items-center vh-100 bg-dark text-white">
+            <div className="text-center">
+                <h2>Access Denied</h2>
+                <p>Please log in to view your dashboard.</p>
+                <a href="/" className="btn btn-warning">Go to Login</a>
+            </div>
+        </div>
+      );
+  }
 
   useEffect(() => {
     if (user) {
@@ -61,10 +74,6 @@ const UserDashboard = () => {
       setUploading(false);
     }
   };
-
-  if (!user) {
-      return <div className="text-white text-center mt-5">Please Login first.</div>;
-  }
 
   return (
     <div className="dashboard-container">
@@ -186,4 +195,4 @@ const UserDashboard = () => {
   );
 };
 
-export default UserDashboard;
+export default StudentDashboard;

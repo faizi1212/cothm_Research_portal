@@ -1,47 +1,35 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUser, FaLock } from "react-icons/fa";
+import { FaUser, FaLock, FaSignInAlt } from "react-icons/fa";
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ONLINE SERVER URL
+  // Point to your live Render Backend
   const API_URL = "https://cothm-research-portal.onrender.com";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // TRIGGERED WHEN YOU CLICK LOGIN
   const handleLogin = async (e) => {
-    e.preventDefault(); // Stop page reload
-    console.log("Login Button Clicked!"); // <--- Check Console for this
-    
-    if(!formData.email || !formData.password) {
-        alert("Please fill in all fields");
-        return;
-    }
-
+    e.preventDefault();
     setLoading(true);
 
     try {
-      console.log("Sending request to:", `${API_URL}/login`);
+      // 1. Send Login Request
       const res = await axios.post(`${API_URL}/login`, formData);
       
-      console.log("Response:", res.data);
-      alert("✅ Login Success! Redirecting...");
+      // 2. Save User Data (Including Role)
+      // We ensure the object has what Navbar expects
+      const userData = res.data.user;
+      localStorage.setItem("user", JSON.stringify(userData));
 
-      // Save user
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-
-      // Redirect
-      if (res.data.user.role === "admin") {
+      // 3. Redirect based on Role
+      if (userData.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/dashboard");
@@ -49,7 +37,7 @@ const Login = () => {
 
     } catch (err) {
       console.error("Login Error:", err);
-      const msg = err.response ? err.response.data.error : "Server not responding";
+      const msg = err.response ? err.response.data.error : "Server not responding. Check connection.";
       alert("❌ Login Failed: " + msg);
     } finally {
       setLoading(false);
@@ -57,56 +45,71 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-wrapper" style={{background: "#121212", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center"}}>
+    <div className="auth-wrapper position-relative" style={{minHeight: "100vh", overflow: "hidden"}}>
       
-      {/* LOGIN CARD */}
-      <div className="card auth-card p-4" style={{ maxWidth: "450px", width: "100%", background: "#1e1e1e", border: "1px solid #333", color: "white" }}>
-        <div className="text-center mb-4">
-          <h2 className="text-warning fw-bold">COTHM PORTAL</h2>
-          <p className="text-secondary">Login to Continue</p>
-        </div>
+      {/* 🎥 VIDEO BACKGROUND */}
+      <video autoPlay loop muted className="video-bg position-absolute w-100 h-100" style={{objectFit: "cover", zIndex: -1}}>
+        {/* Using a professional tech/dark background video */}
+        <source src="https://cdn.pixabay.com/video/2020/04/18/36465-412239634_large.mp4" type="video/mp4" />
+      </video>
 
-        <form onSubmit={handleLogin}>
-          {/* Email */}
-          <div className="input-group mb-3">
-            <span className="input-group-text bg-dark border-secondary text-warning"><FaUser /></span>
-            <input 
+      {/* OVERLAY for better text readability */}
+      <div className="position-absolute w-100 h-100" style={{background: "rgba(0,0,0,0.7)", zIndex: 0}}></div>
+
+      <div className="container d-flex align-items-center justify-content-center" style={{minHeight: "100vh", position: "relative", zIndex: 2}}>
+        <div className="card p-5 shadow-lg border-0" style={{ maxWidth: "450px", width: "100%", background: "rgba(20, 20, 20, 0.85)", backdropFilter: "blur(10px)", borderTop: "4px solid #ffc107" }}>
+          
+          <div className="text-center mb-5">
+            <h2 className="text-white fw-bold mb-1">COTHM PORTAL</h2>
+            <p className="text-warning small letter-spacing-2 text-uppercase">Research & Thesis Management</p>
+          </div>
+
+          <form onSubmit={handleLogin}>
+            {/* Email Input */}
+            <div className="form-floating mb-3">
+              <input 
                 type="email" 
                 name="email" 
-                className="form-control bg-dark text-white border-secondary" 
-                placeholder="Email Address" 
+                className="form-control bg-transparent text-white border-secondary" 
+                id="emailInput"
+                placeholder="name@example.com"
                 onChange={handleChange} 
                 required 
-            />
-          </div>
+                style={{color: "white"}}
+              />
+              <label htmlFor="emailInput" className="text-secondary"><FaUser className="me-2"/>Email Address</label>
+            </div>
 
-          {/* Password */}
-          <div className="input-group mb-4">
-            <span className="input-group-text bg-dark border-secondary text-warning"><FaLock /></span>
-            <input 
+            {/* Password Input */}
+            <div className="form-floating mb-4">
+              <input 
                 type="password" 
                 name="password" 
-                className="form-control bg-dark text-white border-secondary" 
-                placeholder="Password" 
+                className="form-control bg-transparent text-white border-secondary" 
+                id="passInput"
+                placeholder="Password"
                 onChange={handleChange} 
                 required 
-            />
-          </div>
+              />
+              <label htmlFor="passInput" className="text-secondary"><FaLock className="me-2"/>Password</label>
+            </div>
 
-          {/* LOGIN BUTTON */}
-          <button 
-            type="submit" 
-            className="btn btn-warning w-100 mb-3 fw-bold" 
-            disabled={loading}
-            style={{height: "50px"}}
-          >
-             {loading ? "Connecting..." : "LOGIN NOW"}
-          </button>
+            {/* Login Button */}
+            <button 
+              type="submit" 
+              className="btn btn-warning w-100 py-3 fw-bold text-uppercase mb-4 shadow-sm"
+              disabled={loading}
+              style={{letterSpacing: "1px"}}
+            >
+               {loading ? "Authenticating..." : <><FaSignInAlt className="me-2"/> Access Portal</>}
+            </button>
 
-          <div className="text-center">
-            <Link to="/signup" className="text-warning text-decoration-none">Create an Account</Link>
-          </div>
-        </form>
+            <div className="text-center border-top border-secondary pt-4">
+              <p className="text-white-50 small mb-2">New Student?</p>
+              <Link to="/signup" className="text-warning text-decoration-none fw-bold">Register Account</Link>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -9,9 +9,11 @@ import Login from "./Login";
 import Signup from "./Signup";
 import AdminDashboard from "./AdminDashboard";
 import PortalDashboard from "./PortalDashboard";
+// --- NEW IMPORTS (These were missing) ---
+import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 
 // --- 🔒 SECURITY GUARD COMPONENT ---
-// This acts like a bouncer. It checks if you are allowed in.
 const ProtectedRoute = ({ children, requiredRole }) => {
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -22,7 +24,6 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   // 2. If the page requires "admin" role, but user is NOT admin
   if (requiredRole === "admin" && user.role !== "admin") {
-    // Kick them to the student dashboard instead
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -35,9 +36,13 @@ function App() {
     <Router>
       <Navbar />
       <Routes>
-        {/* PUBLIC ROUTES (Anyone can see these) */}
+        {/* PUBLIC ROUTES */}
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        
+        {/* --- NEW PASSWORD ROUTES (Add these!) --- */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* 🔒 SECURE STUDENT ROUTE */}
         <Route 
@@ -49,7 +54,7 @@ function App() {
           } 
         />
 
-        {/* 🔒 SECURE ADMIN ROUTE (Only Admin can see) */}
+        {/* 🔒 SECURE ADMIN ROUTE */}
         <Route 
           path="/admin" 
           element={

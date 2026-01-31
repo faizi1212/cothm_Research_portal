@@ -1,18 +1,40 @@
-/* --- PREMIUM COTHM THEME --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
+
+/* =========================================
+   1. GLOBAL VARIABLES & RESET
+   ========================================= */
 :root {
-  --cothm-navy: #0f2027;
-  --cothm-blue: #203a43;
-  --cothm-gold: #c5a059; /* Elegant Gold */
-  --cothm-gold-hover: #b08d45;
-  --cothm-pearl: #fdfcf8; /* Soft Cream (Not stark white) */
+  --cothm-navy: #0f2027;        /* Deep Navy */
+  --cothm-blue: #203a43;        /* Secondary Blue */
+  --cothm-cyan: #2c5364;        /* Lighter Blue */
+  --cothm-gold: #c5a059;        /* Elegant Gold */
+  --cothm-gold-hover: #b08d45;  /* Darker Gold */
+  --cothm-pearl: #fdfcf8;       /* Soft Cream Background */
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.2);
 }
 
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f4f6f9; /* Light gray for dashboard background */
+  overflow-x: hidden;
+}
+
+/* Typography Helpers */
+.text-navy { color: var(--cothm-navy) !important; }
+.text-gold { color: var(--cothm-gold) !important; }
+.fw-bold { font-weight: 600 !important; }
+.fw-extra-bold { font-weight: 800 !important; }
+
+/* =========================================
+   2. PREMIUM AUTH THEME (Login, Signup, Forgot Pass)
+   ========================================= */
 .auth-page-wrapper {
   display: flex;
   min-height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background: var(--cothm-navy); /* Dark background behind everything */
+  background: var(--cothm-navy);
 }
 
 /* LEFT SIDE: Brand & Visuals */
@@ -27,66 +49,222 @@
   padding: 40px;
   position: relative;
   overflow: hidden;
-  border-right: 5px solid var(--cothm-gold); /* Gold divider line */
+  border-right: 5px solid var(--cothm-gold);
 }
 
-/* RIGHT SIDE: The Form (Now Pearl Color, not White) */
-.auth-form-section {
-  flex: 0.8;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: var(--cothm-pearl); /* <--- CHANGED FROM WHITE */
-  padding: 50px;
-  box-shadow: -20px 0 50px rgba(0,0,0,0.3);
-  position: relative;
+/* Animated Background Circles */
+.auth-hero-section::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  background: rgba(197, 160, 89, 0.1); /* Gold tint */
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 10s infinite ease-in-out;
+}
+
+.auth-hero-section::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: rgba(44, 83, 100, 0.2); /* Blue tint */
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 12s infinite ease-in-out reverse;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
+}
+
+.hero-content {
+  z-index: 2;
+  text-align: center;
+  max-width: 500px;
 }
 
 .hero-title {
   font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 1rem;
-  /* Gold Gradient Text */
   background: -webkit-linear-gradient(#fff, var(--cothm-gold));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0px 5px 15px rgba(0,0,0,0.3);
 }
 
-/* GOLD BUTTONS */
-.btn-primary {
-  background: linear-gradient(45deg, var(--cothm-gold), #e6c88b);
-  border: none;
-  color: #0f2027 !important; /* Dark text on gold button */
-  transition: transform 0.2s;
+/* RIGHT SIDE: The Form */
+.auth-form-section {
+  flex: 0.8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: var(--cothm-pearl);
+  padding: 50px;
+  box-shadow: -20px 0 50px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 10;
 }
 
-.btn-primary:hover {
-  background: linear-gradient(45deg, #b08d45, var(--cothm-gold));
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3);
+.auth-card-modern {
+  width: 100%;
+  max-width: 450px;
+  animation: slideInRight 0.8s ease-out;
 }
 
-/* Floating Input Fields */
-.form-floating-custom input {
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Inputs */
+.form-floating-custom {
+  position: relative;
+  margin-bottom: 1.2rem;
+}
+
+.form-floating-custom input,
+.form-floating-custom select {
   width: 100%;
   padding: 15px 15px 15px 45px;
   border: 1px solid #d1d9e6;
   border-radius: 8px;
-  background: white; /* Inputs stay white for contrast */
+  background: white;
   font-size: 1rem;
   transition: all 0.3s ease;
 }
 
-.form-floating-custom input:focus {
+.form-floating-custom input:focus,
+.form-floating-custom select:focus {
   border-color: var(--cothm-gold);
   box-shadow: 0 0 0 4px rgba(197, 160, 89, 0.15);
+  outline: none;
 }
 
-/* Mobile Responsiveness */
+.field-icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  transform: translateY(-50%);
+  color: #adb5bd;
+  transition: color 0.3s;
+  z-index: 5;
+}
+
+.form-floating-custom input:focus + .field-icon,
+.form-floating-custom input:focus ~ .field-icon {
+  color: var(--cothm-gold);
+}
+
+/* =========================================
+   3. BUTTONS & UI ELEMENTS
+   ========================================= */
+.btn-primary, .btn-primary-custom {
+  background: linear-gradient(45deg, var(--cothm-gold), #e6c88b);
+  border: none;
+  color: #0f2027 !important;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover, .btn-primary-custom:hover {
+  background: linear-gradient(45deg, #b08d45, var(--cothm-gold));
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3);
+  color: #0f2027 !important;
+}
+
+.btn-info {
+    background-color: var(--cothm-blue);
+    border: none;
+}
+
+/* =========================================
+   4. DASHBOARD STYLES (Admin & Student)
+   ========================================= */
+.dashboard-container {
+  padding-top: 40px;
+  padding-bottom: 60px;
+  min-height: 90vh;
+}
+
+/* Glass Card */
+.card-dashboard, .glass-card {
+  background: white;
+  border-radius: 15px;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.card-dashboard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+/* Tables */
+.table thead th {
+  background-color: #f8f9fa;
+  color: var(--cothm-navy);
+  font-weight: 600;
+  border-bottom: 2px solid var(--cothm-gold);
+}
+
+.table-hover tbody tr:hover {
+  background-color: #fffbf2; /* Very light gold tint on hover */
+}
+
+/* Status Badges */
+.badge {
+  padding: 0.6em 1em;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* =========================================
+   5. NAVBAR STYLES
+   ========================================= */
+.navbar-glass {
+  background: linear-gradient(90deg, var(--cothm-navy), var(--cothm-blue));
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.navbar-brand {
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
+.nav-link {
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.nav-link:hover {
+  color: var(--cothm-gold) !important;
+}
+
+/* =========================================
+   6. RESPONSIVENESS
+   ========================================= */
 @media (max-width: 900px) {
-  .auth-page-wrapper { flex-direction: column; }
-  .auth-hero-section { flex: 0.3; border-right: none; border-bottom: 5px solid var(--cothm-gold); }
-  .auth-form-section { flex: 1; border-radius: 30px 30px 0 0; top: -20px; }
+  /* Auth Page Stacking */
+  .auth-page-wrapper { flex-direction: column; overflow-y: auto; }
+  .auth-hero-section { flex: 0.3; padding: 30px 20px; border-right: none; border-bottom: 5px solid var(--cothm-gold); }
+  .hero-title { font-size: 2.2rem; }
+  .auth-form-section { flex: 1; padding: 30px 20px; }
+  
+  /* Navbar adjustments */
+  .navbar-nav { text-align: center; margin-top: 1rem; }
+  .nav-item { margin-bottom: 0.5rem; }
 }

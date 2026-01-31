@@ -1,50 +1,24 @@
 /* =========================================
-   1. GLOBAL & SCROLLBAR SETTINGS (NEW)
+   1. GLOBAL STYLES (New Professional Theme)
    ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
+
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  overflow-x: hidden;
-  background-color: #121212; /* Deep Dark Background for Dashboard */
-  color: #fff;
-}
-
-/* Custom "Gold" Scrollbar for Chrome/Edge/Safari */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1e1e1e;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 5px;
-  border: 2px solid #1e1e1e; /* Creates a nice padding effect */
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #d4af37; /* Turns Gold on Hover */
+  font-family: 'Poppins', sans-serif;
+  /* PROFESSIONAL CAMPUS BACKGROUND */
+  background: linear-gradient(rgba(0, 51, 102, 0.85), rgba(0, 30, 60, 0.9)), 
+              url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #333;
+  min-height: 100vh;
 }
 
 /* =========================================
-   2. VIDEO BACKGROUND (Login/Signup)
-   ========================================= */
-.video-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -1;
-  filter: brightness(0.4);
-}
-
-/* =========================================
-   3. AUTH CARD DESIGN (Glassmorphism)
+   2. GLASS CARDS (White & Clean)
    ========================================= */
 .auth-wrapper {
   min-height: 100vh;
@@ -54,164 +28,101 @@ body {
   padding: 20px;
 }
 
-.auth-card {
-  background: rgba(20, 30, 48, 0.85); 
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
-  overflow: hidden;
-  animation: floatUp 1s ease-out;
-  color: white;
-}
-
-@keyframes floatUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.auth-header {
-  background: transparent;
-  padding: 40px 20px 20px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.glass-card {
+  background: rgba(255, 255, 255, 0.95); /* White, slightly see-through */
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  padding: 40px;
+  width: 100%;
+  max-width: 450px;
+  border-top: 5px solid #d4af37; /* COTHM Gold Top Border */
 }
 
 /* =========================================
-   4. TYPOGRAPHY & GOLD EFFECTS
+   3. TYPOGRAPHY
    ========================================= */
-.cothm-title {
-  color: #fff;
-  font-size: 1.8rem;
+h2, h3, h4 {
+  color: #003366; /* Deep Navy Blue */
   font-weight: 800;
-  letter-spacing: 2px;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-  background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-size: 200% auto;
-  animation: shine 4s linear infinite;
 }
 
-@keyframes shine {
-  to { background-position: 200% center; }
-}
-
-.cothm-subtitle {
-  color: #d4af37;
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  display: block;
-  margin-bottom: 5px;
-}
-
-.portal-tagline {
-  font-size: 0.85rem;
-  letter-spacing: 1px;
-}
-
-.text-gold {
-  color: #d4af37 !important;
-}
+.text-gold { color: #d4af37 !important; }
+.text-navy { color: #003366 !important; }
 
 /* =========================================
-   5. FORM INPUTS (Dark Theme)
+   4. FORM INPUTS (Clean White Theme)
    ========================================= */
-.input-group-text {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-right: none;
-  color: #d4af37;
-}
-
 .form-control, .form-select {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-left: none;
-  color: white;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  color: #333;
   padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
 }
 
-.form-control::placeholder { color: rgba(255, 255, 255, 0.5); }
-
-.form-control:focus, .form-select:focus {
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: none;
-  border-color: #d4af37;
-  color: white;
-}
-
-.form-select option {
-  background-color: #1a2a3a;
-  color: white;
+.form-control:focus {
+  background: #fff;
+  border-color: #d4af37; /* Gold focus */
+  box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
 }
 
 /* =========================================
-   6. BUTTONS
+   5. BUTTONS (Professional Gradient)
    ========================================= */
-.btn-cothm {
-  background: linear-gradient(45deg, #d4af37, #aa771c);
-  color: #000;
-  font-weight: 700;
-  padding: 12px;
-  letter-spacing: 1px;
+.btn-primary-custom {
+  background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%);
   border: none;
-  transition: all 0.3s;
-  margin-top: 10px;
+  color: white;
+  font-weight: 700;
+  padding: 12px 25px;
+  border-radius: 8px;
+  letter-spacing: 1px;
+  transition: transform 0.2s;
+  width: 100%;
 }
 
-.btn-cothm:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
-  color: #000;
+.btn-primary-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+  color: white;
 }
-
-.link-cothm {
-  color: #d4af37;
-  text-decoration: none;
-  font-weight: 500;
-}
-.link-cothm:hover { text-decoration: underline; color: #fff; }
 
 /* =========================================
-   7. DASHBOARD SPECIFIC STYLES (NEW)
+   6. DASHBOARD STYLES
    ========================================= */
 .dashboard-container {
-  min-height: 100vh;
-  padding-top: 20px;
-  /* Dark background is handled by body, but this ensures fallback */
-  background-color: #121212; 
+  padding-top: 30px;
+  padding-bottom: 50px;
 }
 
-/* Table Hover Effect - Makes rows light up slightly */
-.table-hover tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  transition: background-color 0.2s ease-in-out;
+.card-dashboard {
+  background: white;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 
-/* Navbar Tweaks */
-.navbar {
-  background: rgba(0, 0, 0, 0.85) !important;
-  border-bottom: 1px solid #d4af37;
-  backdrop-filter: blur(5px);
+.card-header-custom {
+  background: #003366;
+  color: white;
+  padding: 20px;
+  font-weight: 600;
 }
 
-.navbar-brand {
-  font-weight: 800;
-  letter-spacing: 1px;
+/* Navbar */
+.navbar-custom {
+  background: white !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.nav-link {
+  color: #003366 !important;
+  font-weight: 600;
+}
+
+.nav-link.active {
   color: #d4af37 !important;
-}
-
-/* Background for Dashboard (if not using video) */
-.dashboard-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background-color: #121212; 
 }

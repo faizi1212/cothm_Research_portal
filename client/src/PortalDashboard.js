@@ -1,50 +1,47 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaCloudUploadAlt, FaHistory } from "react-icons/fa";
+import { FaCloudUploadAlt, FaHistory, FaFileAlt } from "react-icons/fa";
 
 const PortalDashboard = () => {
-  // ✅ ALL HOOKS AT THE TOP FIRST
   const [file, setFile] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [projectStatus, setProjectStatus] = useState("Not Started");
   const [uploading, setUploading] = useState(false);
   
-  // ONLINE SERVER URL
-  const API_URL = "https://cothm-research-portal.onrender.com/api/user";
+  const API_URL = "https://cothm-research-portal.onrender.com";
   
+  // 1. Get User
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // ✅ useEffect with proper dependency handling
+  // 2. Logic to Fix "Undefined" Name
+  const getDisplayName = () => {
+    if (!user) return "Student";
+    if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
+    if (user.firstName) return user.firstName;
+    if (user.name) return user.name;
+    // Last resort: use email prefix
+    if (user.email) return user.email.split('@')[0];
+    return "Student";
+  };
+
+  // 3. Safety Check
+  if (!user) {
+      window.location.href = "/";
+      return null;
+  }
+
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
-        const res = await axios.get(`${API_URL}/my-project?email=${user.email}`);
+        const res = await axios.get(`${API_URL}/api/status/${user.email}`);
         if (res.data) {
             setSubmissions(res.data.submissions || []);
             setProjectStatus(res.data.status || "Pending Review");
         }
-      } catch (err) { 
-        console.log("No submissions found."); 
-      }
+      } catch (err) { console.log("No data found"); }
     };
-
-    if (user) {
-      fetchSubmissions();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
-
-  // ✅ NOW CONDITIONAL RETURNS ARE OK
-  if (!user) {
-      return (
-        <div className="d-flex justify-content-center align-items-center vh-100 bg-dark text-white">
-            <div className="text-center">
-                <h2>Access Denied</h2>
-                <a href="/" className="btn btn-warning">Go to Login</a>
-            </div>
-        </div>
-      );
-  }
+    fetchSubmissions();
+  }, [user.email]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -52,93 +49,87 @@ const PortalDashboard = () => {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("email", user.email);
-    formData.append("studentName", user.name);
-    formData.append("regNumber", user.regNumber || "N/A"); 
-    formData.append("batch", user.batch || "N/A"); 
+    formData.append("studentEmail", user.email);
+    formData.append("studentName", getDisplayName()); // Send corrected name
+    formData.append("stage", "Thesis Submission");
 
     setUploading(true);
 
     try {
-      await axios.post(`${API_URL}/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axios.post(`${API_URL}/api/submit`, formData);
       alert("✅ Upload Successful!");
       setFile(null);
-      
-      // Refresh submissions after upload
-      const res = await axios.get(`${API_URL}/my-project?email=${user.email}`);
-      if (res.data) {
-          setSubmissions(res.data.submissions || []);
-          setProjectStatus(res.data.status || "Pending Review");
-      }
+      window.location.reload(); // Refresh to see changes
     } catch (err) {
-      alert("Upload Failed.");
+      alert("Upload Failed: " + (err.response?.data?.error || "Server Error"));
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-bg"></div>
-      <div className="container py-5">
-        <div className="row mb-5 align-items-center">
-            <div className="col-md-8">
-                <h1 className="text-white fw-bold">Welcome, <span className="text-gold">{user.name}</span></h1>
+    <div className="dashboard-container container">
+      <div className="row justify-content-center">
+        <div className="col-lg-10">
+          
+          {/* WELCOME HEADER */}
+          <div className="card-dashboard mb-4">
+            <div className="card-body p-5 text-center">
+              <h1 className="fw-bold text-navy">Welcome, <span className="text-gold">{getDisplayName()}</span></h1>
+              <p className="text-muted">Manage your thesis submissions and track status.</p>
+              
+              <div className="d-inline-block px-4 py-2 rounded-pill bg-light border border-warning mt-3">
+                <span className="fw-bold text-navy">Current Status: </span>
+                <span className={`fw-bold ${projectStatus === 'Approved' ? 'text-success' : 'text-warning'}`}>
+                  {projectStatus.toUpperCase()}
+                </span>
+              </div>
             </div>
-            <div className="col-md-4 text-end">
-                <div className="badge bg-dark border border-secondary p-3">
-                    <div className="fs-5 fw-bold text-warning">{projectStatus.toUpperCase()}</div>
+          </div>
+
+          {/* UPLOAD SECTION */}
+          <div className="row g-4">
+            <div className="col-md-6">
+              <div className="card-dashboard h-100">
+                <div className="card-header-custom"><FaCloudUploadAlt className="me-2"/> Submit New Document</div>
+                <div className="card-body p-4 text-center">
+                  <div className="border border-2 border-light border-dashed rounded p-4 mb-3">
+                     <input type="file" className="form-control" onChange={(e) => setFile(e.target.files[0])} />
+                  </div>
+                  <button className="btn-primary-custom" onClick={handleUpload} disabled={uploading}>
+                    {uploading ? "Uploading..." : "Upload Thesis"}
+                  </button>
                 </div>
+              </div>
             </div>
-        </div>
 
-        {/* UPLOAD SECTION */}
-        <div className="card bg-dark border-secondary shadow-lg p-4">
-            <h5 className="text-white mb-4"><FaCloudUploadAlt className="me-2"/> Submit Thesis</h5>
-            <input 
-                type="file" 
-                className="form-control bg-dark text-white border-secondary mb-3" 
-                onChange={(e) => setFile(e.target.files[0])} 
-                accept=".pdf,.doc,.docx"
-            />
-            <button 
-                className="btn btn-warning w-100 fw-bold" 
-                onClick={handleUpload} 
-                disabled={uploading}
-            >
-                {uploading ? "Uploading..." : "Upload Now"}
-            </button>
-        </div>
-
-        {/* HISTORY SECTION */}
-        <div className="mt-5">
-            <h5 className="text-white"><FaHistory className="me-2"/> History</h5>
-            <div className="list-group">
-                {submissions.length === 0 ? (
-                    <div className="list-group-item bg-dark text-white border-secondary text-center p-4">
-                        <span className="text-secondary">No submissions yet</span>
-                    </div>
-                ) : (
-                    submissions.slice().reverse().map((sub, index) => (
-                        <div 
-                            key={index} 
-                            className="list-group-item bg-dark text-white border-secondary d-flex justify-content-between p-3"
-                        >
-                            <span>Version {submissions.length - index}</span>
-                            <a 
-                                href={sub.fileUrl} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                className="btn btn-sm btn-outline-light"
-                            >
-                                Download
-                            </a>
-                        </div>
-                    ))
-                )}
+            {/* HISTORY SECTION */}
+            <div className="col-md-6">
+              <div className="card-dashboard h-100">
+                <div className="card-header-custom"><FaHistory className="me-2"/> Submission History</div>
+                <div className="card-body p-0">
+                  <ul className="list-group list-group-flush">
+                    {submissions.length === 0 ? (
+                      <li className="list-group-item p-4 text-center text-muted">No submissions yet.</li>
+                    ) : (
+                      submissions.slice().reverse().map((sub, index) => (
+                        <li key={index} className="list-group-item p-3 d-flex justify-content-between align-items-center">
+                           <div>
+                             <div className="fw-bold text-navy">Version {submissions.length - index}</div>
+                             <small className="text-muted">{new Date(sub.submittedAt).toLocaleDateString()}</small>
+                           </div>
+                           <a href={sub.fileUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary">
+                             <FaFileAlt/> View
+                           </a>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              </div>
             </div>
+          </div>
+
         </div>
       </div>
     </div>

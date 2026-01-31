@@ -8,7 +8,7 @@ import Navbar from "./Navbar";
 import Login from "./Login";
 import Signup from "./Signup";
 import AdminDashboard from "./AdminDashboard";
-import UserDashboard from "./UserDashboard"; // <--- THIS IS THE KEY CONNECTION
+import StudentDashboard from "./StudentDashboard"; // <--- Updated Name to match file
 
 function App() {
   return (
@@ -19,8 +19,8 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* STUDENT ROUTE (The New Dashboard) */}
-        <Route path="/dashboard" element={<UserDashboard />} />
+        {/* STUDENT ROUTE (Updated Component Name) */}
+        <Route path="/dashboard" element={<StudentDashboard />} />
 
         {/* ADMIN ROUTE */}
         <Route path="/admin" element={<AdminDashboard />} />

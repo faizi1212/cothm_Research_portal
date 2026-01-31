@@ -8,7 +8,7 @@ import Navbar from "./Navbar";
 import Login from "./Login";
 import Signup from "./Signup";
 import AdminDashboard from "./AdminDashboard";
-import PortalDashboard from "./PortalDashboard"; // <--- NEW IMPORT
+import PortalDashboard from "./PortalDashboard"; // <--- NEW NAME
 
 function App() {
   return (
@@ -17,8 +17,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-
-        {/* DASHBOARD ROUTE POINTS TO NEW FILE */}
+        
+        {/* NEW DASHBOARD ROUTE */}
         <Route path="/dashboard" element={<PortalDashboard />} />
 
         <Route path="/admin" element={<AdminDashboard />} />

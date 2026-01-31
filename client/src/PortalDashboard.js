@@ -3,6 +3,7 @@ import axios from "axios";
 import { FaCloudUploadAlt, FaHistory, FaClock } from "react-icons/fa";
 
 const PortalDashboard = () => {
+  // ✅ ALL HOOKS AT THE TOP FIRST
   const [file, setFile] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [projectStatus, setProjectStatus] = useState("Not Started");
@@ -13,7 +14,14 @@ const PortalDashboard = () => {
   
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // SAFETY CHECK
+  // ✅ useEffect MUST BE HERE - BEFORE ANY CONDITIONAL RETURNS
+  useEffect(() => {
+    if (user) {
+      fetchSubmissions();
+    }
+  }, [user]); // Added user to dependency array
+
+  // ✅ NOW CONDITIONAL RETURNS ARE OK
   if (!user) {
       return (
         <div className="d-flex justify-content-center align-items-center vh-100 bg-dark text-white">
@@ -25,10 +33,6 @@ const PortalDashboard = () => {
       );
   }
 
-  useEffect(() => {
-    if (user) fetchSubmissions();
-  }, []);
-
   const fetchSubmissions = async () => {
     try {
       const res = await axios.get(`${API_URL}/my-project?email=${user.email}`);
@@ -36,7 +40,9 @@ const PortalDashboard = () => {
           setSubmissions(res.data.submissions || []);
           setProjectStatus(res.data.status || "Pending Review");
       }
-    } catch (err) { console.log("No submissions found."); }
+    } catch (err) { 
+      console.log("No submissions found."); 
+    }
   };
 
   const handleUpload = async (e) => {
@@ -84,9 +90,17 @@ const PortalDashboard = () => {
         {/* UPLOAD SECTION */}
         <div className="card bg-dark border-secondary shadow-lg p-4">
             <h5 className="text-white mb-4"><FaCloudUploadAlt className="me-2"/> Submit Thesis</h5>
-            <input type="file" className="form-control bg-dark text-white border-secondary mb-3" 
-                   onChange={(e) => setFile(e.target.files[0])} accept=".pdf,.doc,.docx"/>
-            <button className="btn btn-warning w-100 fw-bold" onClick={handleUpload} disabled={uploading}>
+            <input 
+                type="file" 
+                className="form-control bg-dark text-white border-secondary mb-3" 
+                onChange={(e) => setFile(e.target.files[0])} 
+                accept=".pdf,.doc,.docx"
+            />
+            <button 
+                className="btn btn-warning w-100 fw-bold" 
+                onClick={handleUpload} 
+                disabled={uploading}
+            >
                 {uploading ? "Uploading..." : "Upload Now"}
             </button>
         </div>
@@ -96,9 +110,19 @@ const PortalDashboard = () => {
             <h5 className="text-white"><FaHistory className="me-2"/> History</h5>
             <div className="list-group">
                 {submissions.slice().reverse().map((sub, index) => (
-                    <div key={index} className="list-group-item bg-dark text-white border-secondary d-flex justify-content-between p-3">
+                    <div 
+                        key={index} 
+                        className="list-group-item bg-dark text-white border-secondary d-flex justify-content-between p-3"
+                    >
                         <span>Version {submissions.length - index}</span>
-                        <a href={sub.fileUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-light">Download</a>
+                        <a 
+                            href={sub.fileUrl} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="btn btn-sm btn-outline-light"
+                        >
+                            Download
+                        </a>
                     </div>
                 ))}
             </div>

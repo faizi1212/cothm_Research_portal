@@ -8,7 +8,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Point to your live Render Backend
+  // Use your Render Backend URL
   const API_URL = "https://cothm-research-portal.onrender.com";
 
   const handleChange = (e) => {
@@ -20,15 +20,13 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 1. Send Login Request
       const res = await axios.post(`${API_URL}/login`, formData);
       
-      // 2. Save User Data (Including Role)
-      // We ensure the object has what Navbar expects
+      // ✅ CRITICAL: Save User Data Correctly
       const userData = res.data.user;
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // 3. Redirect based on Role
+      // Redirect Logic
       if (userData.role === "admin") {
         navigate("/admin");
       } else {
@@ -36,80 +34,62 @@ const Login = () => {
       }
 
     } catch (err) {
-      console.error("Login Error:", err);
-      const msg = err.response ? err.response.data.error : "Server not responding. Check connection.";
-      alert("❌ Login Failed: " + msg);
+      console.error(err);
+      alert("Login Failed: " + (err.response?.data?.error || "Check internet connection"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-wrapper position-relative" style={{minHeight: "100vh", overflow: "hidden"}}>
-      
-      {/* 🎥 VIDEO BACKGROUND */}
-      <video autoPlay loop muted className="video-bg position-absolute w-100 h-100" style={{objectFit: "cover", zIndex: -1}}>
-        {/* Using a professional tech/dark background video */}
-        <source src="https://cdn.pixabay.com/video/2020/04/18/36465-412239634_large.mp4" type="video/mp4" />
-      </video>
+    <div className="container d-flex align-items-center justify-content-center" style={{minHeight: "85vh"}}>
+      <div className="glass-card p-5" style={{ maxWidth: "450px", width: "100%" }}>
+        
+        <div className="text-center mb-4">
+          <h2 className="fw-bold mb-1 text-warning">Welcome Back</h2>
+          <p className="text-white-50">Please login to your account</p>
+        </div>
 
-      {/* OVERLAY for better text readability */}
-      <div className="position-absolute w-100 h-100" style={{background: "rgba(0,0,0,0.7)", zIndex: 0}}></div>
-
-      <div className="container d-flex align-items-center justify-content-center" style={{minHeight: "100vh", position: "relative", zIndex: 2}}>
-        <div className="card p-5 shadow-lg border-0" style={{ maxWidth: "450px", width: "100%", background: "rgba(20, 20, 20, 0.85)", backdropFilter: "blur(10px)", borderTop: "4px solid #ffc107" }}>
-          
-          <div className="text-center mb-5">
-            <h2 className="text-white fw-bold mb-1">COTHM PORTAL</h2>
-            <p className="text-warning small letter-spacing-2 text-uppercase">Research & Thesis Management</p>
-          </div>
-
-          <form onSubmit={handleLogin}>
-            {/* Email Input */}
-            <div className="form-floating mb-3">
+        <form onSubmit={handleLogin}>
+          <div className="mb-3">
+            <label className="text-white-50 mb-1 small">Email Address</label>
+            <div className="input-group">
+              <span className="input-group-text form-control-glass border-end-0"><FaUser className="text-info"/></span>
               <input 
                 type="email" 
                 name="email" 
-                className="form-control bg-transparent text-white border-secondary" 
-                id="emailInput"
-                placeholder="name@example.com"
+                className="form-control form-control-glass border-start-0" 
+                placeholder="name@cothm.edu.pk" 
                 onChange={handleChange} 
                 required 
-                style={{color: "white"}}
               />
-              <label htmlFor="emailInput" className="text-secondary"><FaUser className="me-2"/>Email Address</label>
             </div>
+          </div>
 
-            {/* Password Input */}
-            <div className="form-floating mb-4">
+          <div className="mb-4">
+            <label className="text-white-50 mb-1 small">Password</label>
+            <div className="input-group">
+              <span className="input-group-text form-control-glass border-end-0"><FaLock className="text-info"/></span>
               <input 
                 type="password" 
                 name="password" 
-                className="form-control bg-transparent text-white border-secondary" 
-                id="passInput"
-                placeholder="Password"
+                className="form-control form-control-glass border-start-0" 
+                placeholder="Enter password" 
                 onChange={handleChange} 
                 required 
               />
-              <label htmlFor="passInput" className="text-secondary"><FaLock className="me-2"/>Password</label>
             </div>
+          </div>
 
-            {/* Login Button */}
-            <button 
-              type="submit" 
-              className="btn btn-warning w-100 py-3 fw-bold text-uppercase mb-4 shadow-sm"
-              disabled={loading}
-              style={{letterSpacing: "1px"}}
-            >
-               {loading ? "Authenticating..." : <><FaSignInAlt className="me-2"/> Access Portal</>}
-            </button>
+          <button type="submit" className="btn btn-gradient w-100 py-3 mb-4 rounded-3 shadow" disabled={loading}>
+             {loading ? "Authenticating..." : <><FaSignInAlt className="me-2"/> LOGIN NOW</>}
+          </button>
 
-            <div className="text-center border-top border-secondary pt-4">
-              <p className="text-white-50 small mb-2">New Student?</p>
-              <Link to="/signup" className="text-warning text-decoration-none fw-bold">Register Account</Link>
-            </div>
-          </form>
-        </div>
+          <div className="text-center pt-3 border-top border-secondary">
+            <p className="mb-0 text-white-50">Don't have an account?</p>
+            <Link to="/signup" className="text-info fw-bold text-decoration-none">Register New Account</Link>
+          </div>
+        </form>
       </div>
     </div>
   );

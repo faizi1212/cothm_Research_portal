@@ -6,35 +6,39 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get user data
-  const user = JSON.parse(localStorage.getItem("user"));
+  // 1. Get User Data Safely
+  const userString = localStorage.getItem("user");
+  const user = userString ? JSON.parse(userString) : null;
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.clear(); // Clear everything
     navigate("/");
   };
 
-  // Helper to get display name
+  // 2. Fix "Undefined" Name Issue
   const getDisplayName = () => {
-    if (!user) return "";
-    // Check various name formats to prevent "Undefined"
+    if (!user) return "Guest";
+    // Check all possible database fields
     if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
     if (user.firstName) return user.firstName;
     if (user.name) return user.name;
-    return "Student"; // Fallback
+    return "Student"; // Final fallback
   };
 
+  // 3. Check for Admin Role (Case insensitive)
+  const isAdmin = user && user.role && user.role.toLowerCase() === 'admin';
+
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-black border-bottom border-warning sticky-top" style={{boxShadow: "0 4px 15px rgba(212, 175, 55, 0.2)"}}>
+    <nav className="navbar navbar-expand-lg navbar-dark navbar-glass sticky-top py-3">
       <div className="container">
         {/* BRAND */}
-        <Link className="navbar-brand fw-bold text-warning d-flex align-items-center" to="/" style={{ letterSpacing: "1px" }}>
-          <FaUserGraduate className="me-2 fs-4"/> 
-          <span>COTHM <span className="text-white">RESEARCH</span></span>
+        <Link className="navbar-brand fw-bold d-flex align-items-center" to="/">
+          <FaUserGraduate className="me-2 text-warning fs-3"/> 
+          <span style={{letterSpacing: "1px"}}>COTHM <span className="text-info">PORTAL</span></span>
         </Link>
 
         <button 
-          className="navbar-toggler border-secondary" 
+          className="navbar-toggler" 
           type="button" 
           data-bs-toggle="collapse" 
           data-bs-target="#navbarNav"
@@ -46,47 +50,43 @@ const Navbar = () => {
           <ul className="navbar-nav ms-auto align-items-center gap-3">
             
             {user ? (
+              /* --- LOGGED IN STATE --- */
               <>
-                {/* WELCOME MESSAGE */}
-                <li className="nav-item">
-                  <div className="d-flex flex-column align-items-end me-3">
-                    <span className="text-white-50 small" style={{fontSize: "0.75rem"}}>Welcome back,</span>
-                    <span className="text-white fw-bold">{getDisplayName()}</span>
-                  </div>
+                <li className="nav-item text-end me-2">
+                  <div className="text-white-50 small" style={{lineHeight: "1"}}>Logged in as</div>
+                  <div className="fw-bold text-white">{getDisplayName()}</div>
                 </li>
 
-                {/* ADMIN BUTTON - Only shows if role is 'admin' */}
-                {user.role === 'admin' && (
+                {/* ADMIN BUTTON - Explicit Check */}
+                {isAdmin && (
                    <li className="nav-item">
-                     <Link className="btn btn-warning btn-sm fw-bold px-3 text-dark d-flex align-items-center" to="/admin">
-                       <FaShieldAlt className="me-2"/> Admin Panel
+                     <Link className="btn btn-info btn-sm fw-bold px-3 shadow-sm" to="/admin">
+                       <FaShieldAlt className="me-1"/> Admin Panel
                      </Link>
                    </li>
                 )}
 
-                {/* LOGOUT BUTTON */}
                 <li className="nav-item">
-                  <button onClick={handleLogout} className="btn btn-outline-danger btn-sm rounded-pill px-3 d-flex align-items-center">
-                    <FaSignOutAlt className="me-2"/> Logout
+                  <button onClick={handleLogout} className="btn btn-outline-danger btn-sm rounded-pill px-3">
+                    <FaSignOutAlt className="me-1"/> Logout
                   </button>
                 </li>
               </>
             ) : (
-              /* LOGIN / SIGNUP LINKS */
+              /* --- LOGGED OUT STATE --- */
               <>
                 <li className="nav-item">
-                  <Link className={`nav-link ${location.pathname === '/' ? 'active text-warning fw-bold' : ''}`} to="/">
+                  <Link className={`nav-link fw-bold ${location.pathname === '/' ? 'text-warning' : 'text-white'}`} to="/">
                     <FaSignInAlt className="me-1"/> Login
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className={`btn btn-outline-warning btn-sm rounded-pill px-4 ${location.pathname === '/signup' ? 'active' : ''}`} to="/signup">
+                  <Link className="btn btn-gradient btn-sm rounded-pill px-4 shadow" to="/signup">
                     <FaUserPlus className="me-1"/> Register
                   </Link>
                 </li>
               </>
             )}
-
           </ul>
         </div>
       </div>

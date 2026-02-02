@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaSignOutAlt, FaUserCircle } from "react-icons/fa";
+import { FaSignOutAlt } from "react-icons/fa";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -14,9 +14,9 @@ const Navbar = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark fixed-top navbar-glass">
       <div className="container-fluid px-4">
-        {/* BRAND SECTION: Logo + Text */}
+        {/* BRAND SECTION */}
         <Link className="navbar-brand d-flex align-items-center gap-3" to={user ? "/dashboard" : "/"}>
-          {/* Logo Image from public folder */}
+          {/* This looks for the file 'logo.png' in the public folder */}
           <img 
             src="/logo.png" 
             alt="COTHM Logo" 
@@ -35,7 +35,7 @@ const Navbar = () => {
           </span>
         </Link>
 
-        {/* TOGGLE BUTTON (Mobile) */}
+        {/* TOGGLE BUTTON */}
         <button 
           className="navbar-toggler border-0" 
           type="button" 
@@ -61,11 +61,13 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <li className="nav-item">
-                  <span className="nav-link text-white-50 small">
-                    Welcome, <span className="text-white fw-bold">{user.firstName}</span>
-                  </span>
+                <li className="nav-item text-end d-none d-lg-block">
+                  <div className="text-white small fw-bold">Welcome, {user.firstName}</div>
+                  <div className="text-warning" style={{ fontSize: "0.75rem", letterSpacing: "0.5px" }}>
+                    {user.role === "supervisor" ? "SUPERVISOR" : `BATCH ${user.batchNumber || "N/A"}`}
+                  </div>
                 </li>
+
                 <li className="nav-item">
                   <button 
                     onClick={handleLogout} 

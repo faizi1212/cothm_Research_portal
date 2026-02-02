@@ -5,18 +5,18 @@ const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs'); // <--- MATCHES YOUR PACKAGE.JSON
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// LOGGING (Check Render Logs to see these)
+// LOGGING
 app.use((req, res, next) => {
     console.log(`➡️  ${req.method} ${req.url}`);
     next();
 });
 
-// CORS: Allow All Origins (Fixes connection issues)
+// CORS (Allows both Vercel and Localhost)
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,10 +47,10 @@ const UserSchema = new mongoose.Schema({
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }, // Can be hash OR plain text
-    course: { type: String, default: "N/A" },
-    batchNumber: { type: String, default: "N/A" },
+    password: { type: String, required: true },
     role: { type: String, default: "student" },
+    course: { type: String, default: "N/A" },
+    batchNumber: { type: String, default: "N/A" }
 }, { timestamps: true });
 const User = mongoose.model('User', UserSchema);
 
@@ -65,56 +65,47 @@ const ProjectSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Project = mongoose.model('Project', ProjectSchema);
 
-// --- ROUTES ---
-
-// 1. LOGIN HANDLER (The "Master Key" Fix)
+// --- LOGIN HANDLER (THE FIX) ---
 const handleLogin = async (req, res) => {
-    console.log(`🔐 Login Attempt: ${req.body.email}`);
-    
     try {
         const { email, password } = req.body;
-        
-        // --- MASTER KEY FOR ADMIN (Bypasses DB Check) ---
+        console.log(`🔐 Login Attempt: ${email}`);
+
+        // 1. MASTER KEY ADMIN LOGIN (Bypasses Everything)
         if (email === "admin@cothm.edu.pk" && password === "admin123") {
-            console.log("🔑 MASTER KEY USED: Force Login Admin");
-            let admin = await User.findOne({ email: "admin@cothm.edu.pk" });
+            console.log("🔑 MASTER KEY USED");
+            let admin = await User.findOne({ email });
             
-            // If admin doesn't exist, create it instantly
+            // If admin is missing or broken, recreate it
             if (!admin) {
                 admin = await User.create({
                     firstName: "System", lastName: "Admin",
-                    email: "admin@cothm.edu.pk", password: "admin123",
-                    role: "supervisor", course: "Admin", batchNumber: "000"
+                    email, password: "admin123", role: "supervisor",
+                    course: "Admin", batchNumber: "000"
                 });
             } else if (admin.role !== "supervisor") {
                 admin.role = "supervisor";
                 await admin.save();
             }
-
             return res.json({
-                message: "Login Success (Master Key)",
+                message: "Login Success",
                 user: { ...admin._doc, role: "supervisor" }
             });
         }
-        // ------------------------------------------------
 
-        // Normal Student Login
+        // 2. NORMAL LOGIN
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        // Check Password (Try Plain Text first, then Bcrypt)
+        // Check Password (Handles both Plain Text & Encrypted)
         let isMatch = false;
         if (user.password === password) {
-            isMatch = true; // Old account
+            isMatch = true; // Old Plain Text Password
         } else {
-            try {
-                isMatch = await bcrypt.compare(password, user.password); // New account
-            } catch (e) {
-                isMatch = false;
-            }
+            isMatch = await bcrypt.compare(password, user.password); // New Encrypted Password
         }
 
-        if (!isMatch) return res.status(400).json({ message: "Wrong Password" });
+        if (!isMatch) return res.status(400).json({ message: "Invalid Credentials" });
 
         res.json({
             message: "Login Success",
@@ -130,16 +121,17 @@ const handleLogin = async (req, res) => {
         });
 
     } catch (err) {
-        console.error("🔥 LOGIN ERROR:", err);
-        res.status(500).json({ message: "Server Error: " + err.message });
+        console.error("Login Error:", err);
+        res.status(500).json({ message: "Server Error" });
     }
 };
 
-// LISTEN ON BOTH ROUTES (To fix "Not Found" errors)
+// --- ROUTES ---
+
+// CONNECT BOTH PATHS (Fixes frontend/backend mismatch)
 app.post('/api/auth/login', handleLogin);
 app.post('/api/login', handleLogin);
 
-// 2. REGISTER
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { firstName, lastName, email, password, course, batchNumber } = req.body;
@@ -160,36 +152,32 @@ app.post('/api/auth/register', async (req, res) => {
     } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// 3. ADMIN UPDATE (Feedback Fix)
+// ADMIN UPDATE WITH FEEDBACK
 app.post('/api/admin/update', async (req, res) => {
     try {
         const { email, status, comment } = req.body;
-        if (!email || !status) return res.status(400).json({ error: "Missing fields" });
-
         const updateData = { status, updatedAt: new Date() };
         if (comment) updateData.feedback = comment;
 
         const project = await Project.findOneAndUpdate({ studentEmail: email }, updateData, { new: true });
-        if (!project) return res.status(404).json({ error: "Project not found" });
-
         res.json({ message: "Updated", project });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. DATA ROUTES
 app.get('/api/projects/all', async (req, res) => {
     const projects = await Project.find().sort({ updatedAt: -1 });
     res.json(projects);
 });
+
 app.get('/api/projects/my-projects', async (req, res) => {
     const p = await Project.findOne({ studentEmail: req.query.email });
     res.json(p ? [p] : []);
 });
+
 app.post('/api/submit', upload.single("file"), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No file" });
         const { studentEmail, studentName, stage, course, batchNumber } = req.body;
-        
         let project = await Project.findOne({ studentEmail });
         if (!project) project = new Project({ studentEmail, studentName, course, batchNumber });
         
@@ -198,17 +186,6 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
         await project.save();
         res.json({ message: "Uploaded" });
     } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// FORCE ADMIN RESET URL (Use this if you get stuck)
-app.get('/api/fix-admin', async (req, res) => {
-    await User.deleteOne({ email: "admin@cothm.edu.pk" });
-    await User.create({
-        firstName: "System", lastName: "Admin",
-        email: "admin@cothm.edu.pk", password: "admin123", role: "supervisor",
-        course: "Admin", batchNumber: "000"
-    });
-    res.send("Admin Reset. Login: admin@cothm.edu.pk / admin123");
 });
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

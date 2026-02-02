@@ -10,18 +10,18 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// LOGGING
+// LOGGING (Check Render Logs to see these)
 app.use((req, res, next) => {
     console.log(`➡️  ${req.method} ${req.url}`);
     next();
 });
 
-// CORS CONFIGURATION
+// CORS: Allow All Origins (Fixes connection issues)
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// DATABASE CONNECTION
+// DATABASE
 if (!process.env.MONGO_URI) {
     console.error("❌ MONGO_URI is missing!");
     process.exit(1);
@@ -30,7 +30,7 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected"))
     .catch(err => console.error("❌ DB Error:", err.message));
 
-// CLOUDINARY CONFIG
+// CLOUDINARY
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -43,17 +43,15 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage: storage });
 
 // --- MODELS ---
-
 const UserSchema = new mongoose.Schema({
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true }, // Can be hash OR plain text
     course: { type: String, default: "N/A" },
     batchNumber: { type: String, default: "N/A" },
-    role: { type: String, enum: ["student", "supervisor", "admin"], default: "student" },
-    createdAt: { type: Date, default: Date.now }
-});
+    role: { type: String, default: "student" },
+}, { timestamps: true });
 const User = mongoose.model('User', UserSchema);
 
 const ProjectSchema = new mongoose.Schema({
@@ -62,76 +60,84 @@ const ProjectSchema = new mongoose.Schema({
     course: { type: String, default: "N/A" },
     batchNumber: { type: String, default: "N/A" },
     status: { type: String, default: 'Pending Review' }, 
-    feedback: { type: String, default: "" }, // Added Feedback Field
-    submissions: [Object],
-    updatedAt: { type: Date, default: Date.now }
-});
+    feedback: { type: String, default: "" }, 
+    submissions: [Object]
+}, { timestamps: true });
 const Project = mongoose.model('Project', ProjectSchema);
 
 // --- ROUTES ---
 
-// 1. LOGIN ROUTE (Restored to Working State)
-// This supports both plain text (old accounts) and encrypted (new accounts)
-app.post('/api/auth/login', async (req, res) => {
+// 1. LOGIN HANDLER (The "Master Key" Fix)
+const handleLogin = async (req, res) => {
     console.log(`🔐 Login Attempt: ${req.body.email}`);
+    
     try {
-        // Find user
-        const user = await User.findOne({ email: req.body.email });
+        const { email, password } = req.body;
         
-        if (!user) {
-            console.log("❌ User not found");
-            return res.status(404).json({ message: "User not found" });
+        // --- MASTER KEY FOR ADMIN (Bypasses DB Check) ---
+        if (email === "admin@cothm.edu.pk" && password === "admin123") {
+            console.log("🔑 MASTER KEY USED: Force Login Admin");
+            let admin = await User.findOne({ email: "admin@cothm.edu.pk" });
+            
+            // If admin doesn't exist, create it instantly
+            if (!admin) {
+                admin = await User.create({
+                    firstName: "System", lastName: "Admin",
+                    email: "admin@cothm.edu.pk", password: "admin123",
+                    role: "supervisor", course: "Admin", batchNumber: "000"
+                });
+            } else if (admin.role !== "supervisor") {
+                admin.role = "supervisor";
+                await admin.save();
+            }
+
+            return res.json({
+                message: "Login Success (Master Key)",
+                user: { ...admin._doc, role: "supervisor" }
+            });
         }
+        // ------------------------------------------------
 
-        // --- PASSWORD CHECK LOGIC ---
+        // Normal Student Login
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Check Password (Try Plain Text first, then Bcrypt)
         let isMatch = false;
-
-        // CHECK 1: Is it a simple Plain Text password? (Like "admin123")
-        if (user.password === req.body.password) {
-            console.log("✅ Password Matched (Plain Text)");
-            isMatch = true;
-        } 
-        // CHECK 2: Is it Encrypted? (Try bcrypt)
-        else {
+        if (user.password === password) {
+            isMatch = true; // Old account
+        } else {
             try {
-                isMatch = await bcrypt.compare(req.body.password, user.password);
-                if (isMatch) console.log("✅ Password Matched (Encrypted)");
-            } catch (err) {
-                // Ignore error, just means it wasn't encrypted
+                isMatch = await bcrypt.compare(password, user.password); // New account
+            } catch (e) {
+                isMatch = false;
             }
         }
 
-        if (!isMatch) {
-            console.log("❌ Wrong Password");
-            return res.status(400).json({ message: "Invalid Password" });
-        }
+        if (!isMatch) return res.status(400).json({ message: "Wrong Password" });
 
-        // --- AUTO-FIX ADMIN ROLE ---
-        if (user.email === "admin@cothm.edu.pk" && user.role !== "supervisor") {
-            console.log("🔧 Fixing Admin Role to Supervisor...");
-            user.role = "supervisor";
-            await user.save();
-        }
-
-        // RETURN SUCCESS
-        res.json({ 
-            message: "Login Success", 
-            user: { 
+        res.json({
+            message: "Login Success",
+            user: {
                 _id: user._id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                role: user.role, 
+                role: user.role,
                 course: user.course,
                 batchNumber: user.batchNumber
-            } 
+            }
         });
 
     } catch (err) {
-        console.error("❌ SERVER ERROR:", err);
+        console.error("🔥 LOGIN ERROR:", err);
         res.status(500).json({ message: "Server Error: " + err.message });
     }
-});
+};
+
+// LISTEN ON BOTH ROUTES (To fix "Not Found" errors)
+app.post('/api/auth/login', handleLogin);
+app.post('/api/login', handleLogin);
 
 // 2. REGISTER
 app.post('/api/auth/register', async (req, res) => {
@@ -154,57 +160,23 @@ app.post('/api/auth/register', async (req, res) => {
     } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// 3. ADMIN UPDATE (Fixed to handle Comments)
+// 3. ADMIN UPDATE (Feedback Fix)
 app.post('/api/admin/update', async (req, res) => {
     try {
-        // Get email, status AND comment
-        const { email, status, comment } = req.body; 
-        
-        console.log(`📝 Admin Update for ${email}: ${status}`);
+        const { email, status, comment } = req.body;
+        if (!email || !status) return res.status(400).json({ error: "Missing fields" });
 
-        if (!email || !status) {
-            return res.status(400).json({ error: "Email and status required" });
-        }
+        const updateData = { status, updatedAt: new Date() };
+        if (comment) updateData.feedback = comment;
 
-        const updateData = { 
-            status: status,
-            updatedAt: new Date()
-        };
-
-        // If a comment was sent, save it to 'feedback'
-        if (comment) {
-            updateData.feedback = comment;
-        }
-
-        const project = await Project.findOneAndUpdate(
-            { studentEmail: email },
-            updateData,
-            { new: true }
-        );
-
+        const project = await Project.findOneAndUpdate({ studentEmail: email }, updateData, { new: true });
         if (!project) return res.status(404).json({ error: "Project not found" });
 
-        res.json({ message: "Updated successfully", project });
-    } catch (err) {
-        console.error("Admin Update Error:", err);
-        res.status(500).json({ error: "Server error: " + err.message });
-    }
+        res.json({ message: "Updated", project });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. ADMIN FIX (Reset Admin Account - Just in case)
-app.get('/api/fix-admin', async (req, res) => {
-    try {
-        await User.deleteOne({ email: "admin@cothm.edu.pk" });
-        await User.create({
-            firstName: "System", lastName: "Admin",
-            email: "admin@cothm.edu.pk", password: "admin123", role: "supervisor",
-            course: "Admin", batchNumber: "000"
-        });
-        res.send("Admin Reset. Login: admin@cothm.edu.pk / admin123");
-    } catch (err) { res.send(err.message); }
-});
-
-// 5. PROJECT ROUTES
+// 4. DATA ROUTES
 app.get('/api/projects/all', async (req, res) => {
     const projects = await Project.find().sort({ updatedAt: -1 });
     res.json(projects);
@@ -217,13 +189,26 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No file" });
         const { studentEmail, studentName, stage, course, batchNumber } = req.body;
+        
         let project = await Project.findOne({ studentEmail });
         if (!project) project = new Project({ studentEmail, studentName, course, batchNumber });
+        
         project.submissions.push({ stage, fileName: req.file.originalname, fileUrl: req.file.path, date: new Date() });
         project.status = "Pending Review";
         await project.save();
         res.json({ message: "Uploaded" });
     } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// FORCE ADMIN RESET URL (Use this if you get stuck)
+app.get('/api/fix-admin', async (req, res) => {
+    await User.deleteOne({ email: "admin@cothm.edu.pk" });
+    await User.create({
+        firstName: "System", lastName: "Admin",
+        email: "admin@cothm.edu.pk", password: "admin123", role: "supervisor",
+        course: "Admin", batchNumber: "000"
+    });
+    res.send("Admin Reset. Login: admin@cothm.edu.pk / admin123");
 });
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

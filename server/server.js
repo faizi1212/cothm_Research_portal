@@ -5,35 +5,34 @@ const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const nodemailer = require('nodemailer');
+const bcrypt = require('bcrypt'); // Added for password hashing
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 1. LOGGING MIDDLEWARE (See every request)
+// 1. LOGGING MIDDLEWARE
 app.use((req, res, next) => {
     console.log(`➡️  Received Request: ${req.method} ${req.url}`);
     next();
 });
 
+// CORS (Allow Frontend to talk to Backend)
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 2. ROBUST DATABASE CONNECTION
+// 2. DATABASE CONNECTION
 console.log("⏳ Attempting to connect to MongoDB...");
 if (!process.env.MONGO_URI) {
-    console.error("❌ FATAL ERROR: MONGO_URI is missing from Environment Variables!");
+    console.error("❌ FATAL ERROR: MONGO_URI is missing!");
     process.exit(1);
 }
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected Successfully!"))
-    .catch(err => {
-        console.error("❌ MongoDB Connection Failed:", err.message);
-    });
+    .catch(err => console.error("❌ MongoDB Connection Failed:", err.message));
 
-// CLOUDINARY
+// CLOUDINARY CONFIG
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -41,172 +40,184 @@ cloudinary.config({
 });
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: { folder: 'thesis-submissions', allowed_formats: ['pdf', 'doc', 'docx', 'jpg', 'png'], resource_type: 'auto' }
+    params: { folder: 'thesis-submissions', allowed_formats: ['pdf', 'doc', 'docx'], resource_type: 'auto' }
 });
 const upload = multer({ storage: storage });
 
-// MODELS
-const ProjectSchema = new mongoose.Schema({
-    studentEmail: { type: String, required: true },
-    studentName: { type: String, required: true },
-    regNumber: { type: String, default: "N/A" },
-    program: { type: String, default: "N/A" },
-    status: { type: String, default: 'Pending Review' }, 
-    currentStage: { type: String, default: 'Proposal' },
-    submissions: [Object],
-    comments: [Object],
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-});
-const Project = mongoose.model('Project', ProjectSchema);
+// ================= MODELS ================= //
 
+// Updated User Schema (Matches Frontend Fields)
 const UserSchema = new mongoose.Schema({
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    regNumber: { type: String, required: true },
-    program: { type: String, required: true },
-    password: { type: String },
-    role: { type: String, default: "student" },
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true },
+    
+    // NEW FIELDS (Hospitality & Batch)
+    course: { type: String, default: "N/A" },      // e.g. GDICA, DHTML
+    batchNumber: { type: String, default: "N/A" }, // e.g. 22
+    
+    role: { type: String, enum: ["student", "supervisor", "admin"], default: "student" },
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', UserSchema);
 
-// ROUTES
+// Updated Project Schema
+const ProjectSchema = new mongoose.Schema({
+    studentEmail: { type: String, required: true },
+    studentName: { type: String, required: true },
+    
+    // Store these so Supervisors can see them easily
+    course: { type: String, default: "N/A" },
+    batchNumber: { type: String, default: "N/A" },
 
-// --- EMERGENCY ADMIN FIX ROUTE ---
-// Visit https://YOUR-RENDER-URL.com/api/fix-admin to reset admin account
-app.get('/api/fix-admin', async (req, res) => {
+    status: { type: String, default: 'Pending Review' }, 
+    submissions: [Object],
+    comments: [Object],
+    updatedAt: { type: Date, default: Date.now }
+});
+const Project = mongoose.model('Project', ProjectSchema);
+
+
+// ================= ROUTES ================= //
+
+// 1. REGISTER ROUTE (Matches /api/auth/register)
+app.post('/api/auth/register', async (req, res) => {
+    console.log("📝 Registering:", req.body.email);
     try {
-        const adminEmail = "admin@cothm.edu.pk";
-        console.log("🛠️ Starting Admin Fix...");
+        const { firstName, lastName, email, password, course, batchNumber } = req.body;
 
-        // 1. Delete old/broken admin
-        await User.deleteOne({ email: adminEmail });
-        console.log("🗑️ Deleted old admin (if any)");
+        // Check duplicate
+        const existing = await User.findOne({ email });
+        if (existing) return res.status(400).json({ message: "Email already exists" });
 
-        // 2. Create fresh admin
-        const newAdmin = new User({
-            firstName: "Cothm",
-            lastName: "Admin",
-            email: adminEmail,
-            password: "admin123",
-            regNumber: "ADMIN001",
-            program: "Administration",
-            role: "admin"
+        // Hash Password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create User
+        const newUser = new User({
+            firstName,
+            lastName,
+            email,
+            password: hashedPassword,
+            course: course || "N/A",
+            batchNumber: batchNumber || "N/A",
+            role: "student"
         });
 
-        await newAdmin.save();
-        console.log("✅ New Admin Created!");
-        res.send("✅ ADMIN FIXED! You can now login with: <br>Email: <b>admin@cothm.edu.pk</b> <br>Password: <b>admin123</b>");
+        await newUser.save();
+        console.log("✅ User Created Successfully!");
+        res.status(200).json({ message: "User registered successfully!" });
+
     } catch (err) {
-        console.error("❌ Admin Fix Failed:", err);
-        res.status(500).send("Error fixing admin: " + err.message);
+        console.error("❌ Register Error:", err);
+        res.status(500).json({ message: "Server Error: " + err.message });
     }
 });
 
-// LOGIN ROUTE
-app.post('/login', async (req, res) => {
-    console.log(`🔐 Login Attempt for email: ${req.body.email}`);
-    
-    if (mongoose.connection.readyState !== 1) {
-        return res.status(500).json({ error: "Database not connected." });
-    }
-
+// 2. LOGIN ROUTE (Matches /api/auth/login OR /login for safety)
+// We add both paths just in case your frontend Login.js uses the old one.
+const loginHandler = async (req, res) => {
+    console.log(`🔐 Login Attempt: ${req.body.email}`);
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Compare Hashed Password
+        const validPass = await bcrypt.compare(req.body.password, user.password);
+        // Fallback for old plain text admin passwords (optional safety)
+        const isMatch = validPass || user.password === req.body.password; 
+
+        if (!isMatch) return res.status(400).json({ message: "Invalid Credentials" });
+
+        console.log("🚀 Login Success:", user.email);
+        res.json({ 
+            message: "Login Success", 
+            user: { 
+                _id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role,
+                course: user.course,
+                batchNumber: user.batchNumber
+            } 
+        });
+    } catch (err) {
+        console.error("❌ Login Error:", err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
+app.post('/api/auth/login', loginHandler); // New Standard Path
+app.post('/login', loginHandler);          // Old Path (Backup)
+
+
+// 3. FILE UPLOAD ROUTE
+app.post('/api/submit', upload.single("file"), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: "No file uploaded" });
         
-        if (!user) {
-            console.log("⚠️ User Not Found");
-            return res.status(400).json({ error: "Invalid Credentials" });
+        const { studentEmail, studentName, stage, course, batchNumber } = req.body;
+        
+        let project = await Project.findOne({ studentEmail });
+        
+        // If first upload, create project
+        if (!project) {
+            project = new Project({ 
+                studentEmail, 
+                studentName, 
+                course: course || "N/A", 
+                batchNumber: batchNumber || "N/A" 
+            });
         }
-
-        if (user.password !== password) {
-            console.log("⚠️ Wrong Password");
-            return res.status(400).json({ error: "Invalid Credentials" });
-        }
-
-        const role = email === "admin@cothm.edu.pk" ? "admin" : "student";
-        console.log("🚀 Login Successful!");
-        res.json({ message: "Login Success", user: { ...user._doc, role } });
+        
+        // Add submission
+        project.submissions.push({ 
+            stage, 
+            fileName: req.file.originalname, 
+            fileUrl: req.file.path, 
+            date: new Date() 
+        });
+        project.status = 'Pending Review';
+        
+        await project.save();
+        res.json({ message: "Thesis Uploaded Successfully!" });
 
     } catch (err) {
-        console.error("❌ LOGIN ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// ADMIN ROUTES
-app.post('/api/admin/update', async (req, res) => {
-    try {
-        console.log("🔄 Updating Status:", req.body.email);
-        const { email, status } = req.body;
-        const updated = await Project.findOneAndUpdate({ studentEmail: email }, { status: status }, { new: true });
-        res.json({ message: "Updated", project: updated });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.post('/api/admin/comment', async (req, res) => {
-    try {
-        console.log("💬 Adding Comment:", req.body.email);
-        const { email, comment } = req.body;
-        const project = await Project.findOne({ studentEmail: email });
-        if(project) {
-            project.comments.push({ text: comment, adminName: "Supervisor", date: new Date() });
-            await project.save();
-            res.json({ message: "Comment added" });
-        } else {
-            res.status(404).json({ error: "Project not found" });
-        }
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
+// 4. ADMIN / SUPERVISOR ROUTES
 app.get('/api/admin/projects', async (req, res) => {
+    // Return all projects, sorted by newest
     const projects = await Project.find().sort({ updatedAt: -1 });
     res.json(projects);
 });
 
-// REGISTER ROUTE (Fixed Duplicate Check)
-app.post('/api/register', async (req, res) => {
-    console.log("📝 Registration Attempt:", req.body.email);
-    try {
-        const { email } = req.body;
-        const existing = await User.findOne({ email });
-        if (existing) {
-            console.log("⚠️ User already exists");
-            return res.status(400).json({ msg: "Account already exists! Please Login." });
-        }
-        await User.create(req.body);
-        console.log("✅ User Created");
-        res.json({ msg: "Success" });
-    } catch (err) { 
-        console.error("❌ Register Error:", err);
-        res.status(500).send("Error: " + err.message); 
-    }
+// 5. FETCH USER STATUS (For Dashboard)
+app.get('/api/projects/my-projects', async (req, res) => {
+    const p = await Project.findOne({ studentEmail: req.query.email });
+    // Return array format for frontend map() compatibility
+    res.json(p ? [p] : []); 
 });
 
-app.post('/api/submit', upload.single("file"), async (req, res) => {
+// 6. EMERGENCY FIX ADMIN
+app.get('/api/fix-admin', async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ error: "No file" });
-        const { studentEmail, studentName, stage } = req.body;
-        let project = await Project.findOne({ studentEmail });
-        if (!project) {
-            const u = await User.findOne({ email: studentEmail });
-            project = new Project({ studentEmail, studentName, regNumber: u?.regNumber, program: u?.program });
-        }
-        project.submissions.push({ stage, fileUrl: req.file.path });
-        project.status = 'Pending Review';
-        await project.save();
-        res.json({ message: "Uploaded" });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.get('/api/status/:email', async (req, res) => {
-    const p = await Project.findOne({ studentEmail: req.params.email });
-    res.json(p || { status: "Not Started", submissions: [], comments: [] });
+        await User.deleteOne({ email: "admin@cothm.edu.pk" });
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash("admin123", salt);
+        
+        await User.create({
+            firstName: "System", lastName: "Admin",
+            email: "admin@cothm.edu.pk", password: hash,
+            role: "admin", course: "Admin", batchNumber: "000"
+        });
+        res.send("✅ Admin Reset. Login with admin@cothm.edu.pk / admin123");
+    } catch(e) { res.send(e.message); }
 });
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

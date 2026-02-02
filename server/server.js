@@ -5,7 +5,7 @@ const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const bcrypt = require('bcryptjs'); // Using Stable Library
+const bcrypt = require('bcryptjs'); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,7 +21,7 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// DATABASE
+// DATABASE CONNECTION
 if (!process.env.MONGO_URI) {
     console.error("❌ MONGO_URI is missing!");
     process.exit(1);
@@ -30,7 +30,7 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected"))
     .catch(err => console.error("❌ DB Error:", err.message));
 
-// CLOUDINARY
+// CLOUDINARY CONFIG
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -44,11 +44,10 @@ const upload = multer({ storage: storage });
 
 // --- MODELS ---
 
-// 1. USER SCHEMA
 const UserSchema = new mongoose.Schema({
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     course: { type: String, default: "N/A" },
     batchNumber: { type: String, default: "N/A" },
@@ -57,14 +56,13 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
-// 2. PROJECT SCHEMA (Updated with Feedback Field)
 const ProjectSchema = new mongoose.Schema({
     studentEmail: { type: String, required: true },
     studentName: { type: String, required: true },
     course: { type: String, default: "N/A" },
     batchNumber: { type: String, default: "N/A" },
     status: { type: String, default: 'Pending Review' }, 
-    feedback: { type: String, default: "" }, // <--- ADDED THIS FIELD
+    feedback: { type: String, default: "" }, // Added Feedback Field
     submissions: [Object],
     updatedAt: { type: Date, default: Date.now }
 });
@@ -72,44 +70,66 @@ const Project = mongoose.model('Project', ProjectSchema);
 
 // --- ROUTES ---
 
-// 1. LOGIN (Universal Fix)
+// 1. LOGIN ROUTE (Restored to Working State)
+// This supports both plain text (old accounts) and encrypted (new accounts)
 app.post('/api/auth/login', async (req, res) => {
+    console.log(`🔐 Login Attempt: ${req.body.email}`);
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        // Check Password (Supports Plain Text & Encrypted)
-        let isMatch = false;
-        if (user.password === password) {
-            isMatch = true; // Old Account
-        } else {
-            isMatch = await bcrypt.compare(password, user.password); // New Account
+        // Find user
+        const user = await User.findOne({ email: req.body.email });
+        
+        if (!user) {
+            console.log("❌ User not found");
+            return res.status(404).json({ message: "User not found" });
         }
 
-        if (!isMatch) return res.status(400).json({ message: "Invalid Credentials" });
+        // --- PASSWORD CHECK LOGIC ---
+        let isMatch = false;
 
-        // Auto-Fix Admin
+        // CHECK 1: Is it a simple Plain Text password? (Like "admin123")
+        if (user.password === req.body.password) {
+            console.log("✅ Password Matched (Plain Text)");
+            isMatch = true;
+        } 
+        // CHECK 2: Is it Encrypted? (Try bcrypt)
+        else {
+            try {
+                isMatch = await bcrypt.compare(req.body.password, user.password);
+                if (isMatch) console.log("✅ Password Matched (Encrypted)");
+            } catch (err) {
+                // Ignore error, just means it wasn't encrypted
+            }
+        }
+
+        if (!isMatch) {
+            console.log("❌ Wrong Password");
+            return res.status(400).json({ message: "Invalid Password" });
+        }
+
+        // --- AUTO-FIX ADMIN ROLE ---
         if (user.email === "admin@cothm.edu.pk" && user.role !== "supervisor") {
+            console.log("🔧 Fixing Admin Role to Supervisor...");
             user.role = "supervisor";
             await user.save();
         }
 
-        res.json({
-            message: "Login Success",
-            user: {
+        // RETURN SUCCESS
+        res.json({ 
+            message: "Login Success", 
+            user: { 
                 _id: user._id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                role: user.role,
+                role: user.role, 
                 course: user.course,
                 batchNumber: user.batchNumber
-            }
+            } 
         });
+
     } catch (err) {
-        res.status(500).json({ message: "Server Error" });
+        console.error("❌ SERVER ERROR:", err);
+        res.status(500).json({ message: "Server Error: " + err.message });
     }
 });
 
@@ -134,26 +154,25 @@ app.post('/api/auth/register', async (req, res) => {
     } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// 3. ADMIN: UPDATE STATUS & FEEDBACK (The Fix)
+// 3. ADMIN UPDATE (Fixed to handle Comments)
 app.post('/api/admin/update', async (req, res) => {
     try {
-        // Get status AND comment from frontend
+        // Get email, status AND comment
         const { email, status, comment } = req.body; 
         
-        console.log(`📝 Admin Update for ${email}: ${status} | Comment: ${comment}`);
+        console.log(`📝 Admin Update for ${email}: ${status}`);
 
         if (!email || !status) {
             return res.status(400).json({ error: "Email and status required" });
         }
 
-        // Prepare update data
         const updateData = { 
             status: status,
             updatedAt: new Date()
         };
 
-        // Only update feedback if comment is provided
-        if (comment !== undefined) {
+        // If a comment was sent, save it to 'feedback'
+        if (comment) {
             updateData.feedback = comment;
         }
 
@@ -163,9 +182,7 @@ app.post('/api/admin/update', async (req, res) => {
             { new: true }
         );
 
-        if (!project) {
-            return res.status(404).json({ error: "Project not found" });
-        }
+        if (!project) return res.status(404).json({ error: "Project not found" });
 
         res.json({ message: "Updated successfully", project });
     } catch (err) {
@@ -174,7 +191,7 @@ app.post('/api/admin/update', async (req, res) => {
     }
 });
 
-// 4. ADMIN FIX (Reset Admin Account)
+// 4. ADMIN FIX (Reset Admin Account - Just in case)
 app.get('/api/fix-admin', async (req, res) => {
     try {
         await User.deleteOne({ email: "admin@cothm.edu.pk" });

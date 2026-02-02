@@ -1,71 +1,64 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "./App.css";
-
-// IMPORT COMPONENTS
-import Navbar from "./Navbar";
-import Login from "./Login";
-import Signup from "./Signup";
-import AdminDashboard from "./AdminDashboard";
-import PortalDashboard from "./PortalDashboard";
-// --- NEW IMPORTS (These were missing) ---
-import ForgotPassword from "./ForgotPassword";
-import ResetPassword from "./ResetPassword";
-
-// --- 🔒 SECURITY GUARD COMPONENT ---
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  // 1. If user is NOT logged in, kick them back to Login page
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  // 2. If the page requires "admin" role, but user is NOT admin
-  if (requiredRole === "admin" && user.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // 3. If passed all checks, let them in!
-  return children;
-};
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './components/Login';
+import Signup from './components/Signup';
+import PortalDashboard from './components/PortalDashboard';
+import AdminDashboard from './components/AdminDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import './App.css';
 
 function App() {
   return (
     <Router>
-      <Navbar />
       <Routes>
-        {/* PUBLIC ROUTES */}
-        <Route path="/" element={<Login />} />
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         
-        {/* --- NEW PASSWORD ROUTES (Add these!) --- */}
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-
-        {/* 🔒 SECURE STUDENT ROUTE */}
+        {/* Student Dashboard - Only for students */}
         <Route 
           path="/dashboard" 
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['student']}>
               <PortalDashboard />
             </ProtectedRoute>
           } 
         />
-
-        {/* 🔒 SECURE ADMIN ROUTE */}
+        
+        {/* Admin Dashboard - Only for supervisor/admin */}
         <Route 
           path="/admin" 
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
               <AdminDashboard />
             </ProtectedRoute>
           } 
         />
+        
+        {/* Default redirect based on login status */}
+        <Route path="/" element={<RedirectBasedOnAuth />} />
+        
+        {/* 404 - Not Found */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
 }
+
+// Component to redirect based on authentication
+const RedirectBasedOnAuth = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Redirect based on role
+  if (user.role === 'supervisor' || user.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  } else {
+    return <Navigate to="/dashboard" replace />;
+  }
+};
 
 export default App;

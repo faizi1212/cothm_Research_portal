@@ -13,7 +13,7 @@ const Login = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(""); // Clear error when user types
+    setError("");
   };
 
   const handleLogin = async (e) => {
@@ -22,38 +22,23 @@ const Login = () => {
     setError("");
     
     try {
-      console.log("🔐 Attempting login for:", formData.email);
-      
-      // Try the correct endpoint
       const res = await axios.post(`${API_URL}/api/auth/login`, formData);
-      
-      console.log("✅ Login successful:", res.data);
-      
-      // Save user data to localStorage
       localStorage.setItem("user", JSON.stringify(res.data.user));
       
-      // Navigate based on role
       const userRole = res.data.user.role;
       
       if (userRole === "supervisor" || userRole === "admin") {
-        console.log("🔑 Admin/Supervisor access granted");
         navigate("/admin");
       } else {
-        console.log("👤 Student access granted");
         navigate("/dashboard");
       }
       
     } catch (err) {
-      console.error("❌ Login error:", err);
-      
-      // User-friendly error messages
       let errorMsg = "Login failed. Please try again.";
       
       if (err.response) {
-        // Server responded with error
         errorMsg = err.response.data.message || err.response.data.error || errorMsg;
       } else if (err.request) {
-        // No response from server
         errorMsg = "Cannot connect to server. Please check your internet connection.";
       }
       
@@ -66,7 +51,6 @@ const Login = () => {
 
   return (
     <div className="auth-page-wrapper">
-      {/* LEFT SIDE: BRANDING */}
       <div className="auth-hero-section">
         <div className="hero-content">
           <FaUniversity className="mb-4" size={60} style={{ opacity: 0.8 }} />
@@ -81,7 +65,6 @@ const Login = () => {
         </div>
       </div>
 
-      {/* RIGHT SIDE: LOGIN FORM */}
       <div className="auth-form-section">
         <div className="auth-card-modern">
           <div className="mb-5">
@@ -89,7 +72,6 @@ const Login = () => {
             <p className="text-muted">Please enter your details to sign in.</p>
           </div>
 
-          {/* Error Alert */}
           {error && (
             <div className="alert alert-danger alert-dismissible fade show" role="alert">
               <strong>❌ Error:</strong> {error}
@@ -161,16 +143,6 @@ const Login = () => {
             <Link to="/signup" className="fw-bold text-navy text-decoration-none">
               Create an account
             </Link>
-          </div>
-          
-          {/* Test Credentials Helper */}
-          <div className="mt-4 p-3 bg-light rounded-3 small">
-            <div className="fw-bold mb-2 text-navy">🧪 Test Login Credentials:</div>
-            <div className="text-muted">
-              <strong>Admin/Supervisor:</strong><br/>
-              Email: admin@cothm.edu.pk<br/>
-              Password: admin123
-            </div>
           </div>
         </div>
       </div>

@@ -16,11 +16,11 @@ const Navbar = () => {
       <div className="container-fluid px-4">
         {/* BRAND SECTION */}
         <Link className="navbar-brand d-flex align-items-center gap-3" to={user ? "/dashboard" : "/"}>
-          {/* This looks for the file 'logo.png' in the public folder */}
+          {/* INCREASED LOGO SIZE HERE (65px) */}
           <img 
             src="/logo.png" 
             alt="COTHM Logo" 
-            style={{ height: "45px", objectFit: "contain" }} 
+            style={{ height: "65px", objectFit: "contain" }} 
             className="d-inline-block align-text-top"
           />
           <span style={{ 

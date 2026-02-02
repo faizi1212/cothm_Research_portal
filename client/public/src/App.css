@@ -268,3 +268,17 @@ body {
   .navbar-nav { text-align: center; margin-top: 1rem; }
   .nav-item { margin-bottom: 0.5rem; }
 }
+/* --- NEW GLASS NAVBAR UPDATE --- */
+.navbar-glass {
+  background: rgba(15, 32, 39, 0.95) !important; /* Semi-transparent Navy */
+  backdrop-filter: blur(10px); /* The Blur Effect */
+  border-bottom: 2px solid var(--cothm-gold); /* Gold Line at bottom */
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 15px 0; /* Taller, more spacious navbar */
+  transition: all 0.3s ease-in-out;
+}
+
+.navbar-brand:hover img {
+    transform: scale(1.05); /* Logo pops out slightly on hover */
+    transition: transform 0.3s;
+}

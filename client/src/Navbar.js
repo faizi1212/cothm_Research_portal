@@ -12,21 +12,20 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark fixed-top navbar-glass">
+    <nav className="navbar navbar-expand-lg navbar-dark fixed-top navbar-glass" style={{ height: "80px" }}>
       <div className="container-fluid px-3">
         {/* BRAND SECTION */}
         <Link className="navbar-brand d-flex align-items-center gap-2" to={user ? "/dashboard" : "/"}>
           <img 
             src="/logo.png" 
             alt="COTHM Logo" 
-            style={{ height: "45px", objectFit: "contain" }} /* Reduced Height */
+            style={{ height: "50px", objectFit: "contain" }} /* PERFECT SIZE */
             className="d-inline-block align-text-top"
           />
-          {/* COMPACT TITLE STYLING */}
           <span className="d-none d-sm-block" style={{ 
             fontFamily: "'Poppins', sans-serif", 
             fontWeight: "700", 
-            fontSize: "1rem", /* Reduced to 16px (Standard size) */
+            fontSize: "1rem", 
             letterSpacing: "0.5px",
             background: "linear-gradient(to right, #fff, #c5a059)",
             WebkitBackgroundClip: "text",
@@ -63,7 +62,6 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                {/* User Info - Compact Layout */}
                 <li className="nav-item text-end d-none d-lg-block">
                   <div className="text-white fw-bold" style={{ fontSize: "0.85rem" }}>
                     Welcome, {user.firstName}

@@ -11,7 +11,7 @@ import AdminDashboard from "./AdminDashboard";
 import PortalDashboard from "./PortalDashboard";
 // --- NEW IMPORTS (These were missing) ---
 import ForgotPassword from "./ForgotPassword";
-import ResetPassword from "../../src/ResetPassword";
+import ResetPassword from "./ResetPassword";
 
 // --- 🔒 SECURITY GUARD COMPONENT ---
 const ProtectedRoute = ({ children, requiredRole }) => {

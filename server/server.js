@@ -5,174 +5,390 @@ const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const bcrypt = require('bcryptjs'); // <--- USING THE STABLE LIBRARY
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ============================================
 // MIDDLEWARE
+// ============================================
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ============================================
 // DATABASE CONNECTION
+// ============================================
 if (!process.env.MONGO_URI) {
-    console.error("❌ MONGO_URI is missing!");
+    console.error("❌ MONGO_URI missing!");
     process.exit(1);
 }
+
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected"))
-    .catch(err => console.error("❌ DB Error:", err));
+    .catch(err => {
+        console.error("❌ MongoDB Error:", err);
+        process.exit(1);
+    });
 
-// CLOUDINARY
+// ============================================
+// CLOUDINARY CONFIGURATION
+// ============================================
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: { folder: 'thesis-portal', allowed_formats: ['pdf', 'doc', 'docx'] }
+    params: {
+        folder: 'thesis-submissions',
+        allowed_formats: ['pdf', 'doc', 'docx', 'txt', 'zip', 'rar'],
+        resource_type: 'auto'
+    }
 });
-const upload = multer({ storage: storage });
 
-// --- MODELS ---
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 50 * 1024 * 1024 }
+});
+
+// ============================================
+// MODELS
+// ============================================
 const UserSchema = new mongoose.Schema({
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     role: { type: String, default: "student" },
-    // New Fields
-    course: { type: String, default: "N/A" },
-    batchNumber: { type: String, default: "N/A" }
+    regNumber: { type: String },
+    program: { type: String },
+    course: { type: String },
+    batch: { type: String },
+    batchNumber: { type: String }
 }, { timestamps: true });
 
 const User = mongoose.model('User', UserSchema);
 
 const ProjectSchema = new mongoose.Schema({
-    studentEmail: { type: String, required: true },
+    studentEmail: { type: String, required: true, lowercase: true },
     studentName: { type: String, required: true },
-    course: { type: String, default: "N/A" },
-    batchNumber: { type: String, default: "N/A" },
+    regNumber: { type: String, default: "N/A" },
+    program: { type: String, default: "N/A" },
+    batch: { type: String, default: "N/A" },
+    currentStage: { type: String, default: "Not Started" },
     status: { type: String, default: 'Pending Review' },
-    submissions: [Object]
+    submissions: [{
+        stage: String,
+        fileUrl: String,
+        submittedAt: { type: Date, default: Date.now }
+    }]
 }, { timestamps: true });
 
 const Project = mongoose.model('Project', ProjectSchema);
 
-// --- ROUTES ---
+// ============================================
+// ROUTES
+// ============================================
 
-// 1. LOGIN (Universal Fix)
-app.post('/api/auth/login', async (req, res) => {
+// Health Check
+app.get('/', (req, res) => {
+    res.json({
+        status: "✅ COTHM Research Portal API Running",
+        timestamp: new Date().toISOString(),
+        database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    });
+});
+
+// REGISTER
+app.post('/api/register', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        // Check Password (Supports BOTH Plain Text and Encrypted)
-        let isMatch = false;
-        if (user.password === password) {
-            isMatch = true; // Plain text match (Old Admin/Users)
-        } else {
-            isMatch = await bcrypt.compare(password, user.password); // Encrypted match (New Users)
+        const { email, firstName, lastName, regNumber, program } = req.body;
+        
+        const existing = await User.findOne({ email: email.toLowerCase() });
+        if (existing) {
+            return res.status(400).json({ msg: "User already exists" });
         }
 
-        if (!isMatch) return res.status(400).json({ message: "Invalid Credentials" });
+        // Simple password for now (no hashing for simplicity)
+        const user = new User({
+            email: email.toLowerCase(),
+            firstName,
+            lastName,
+            password: req.body.password || 'password123', // Default password
+            regNumber: regNumber || "N/A",
+            program: program || "N/A",
+            role: "student"
+        });
 
-        // Auto-Fix Admin Role
-        if (user.email === "admin@cothm.edu.pk" && user.role !== "supervisor") {
-            user.role = "supervisor";
-            await user.save();
+        await user.save();
+        console.log("✅ User registered:", email);
+        
+        res.json({ msg: "Success" });
+    } catch (err) {
+        console.error("Register Error:", err);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// LOGIN
+app.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(400).json({ error: "User not found" });
+        }
+
+        // Simple password check (plain text for now)
+        // If password starts with $2, it's bcrypt hashed
+        let passwordMatch = false;
+        
+        if (user.password.startsWith('$2')) {
+            // Bcrypt hashed
+            passwordMatch = await bcrypt.compare(password, user.password);
+        } else {
+            // Plain text
+            passwordMatch = (user.password === password);
+        }
+
+        if (!passwordMatch) {
+            return res.status(400).json({ error: "Invalid password" });
+        }
+
+        // Check if admin
+        let role = user.role;
+        if (email.toLowerCase() === "admin@cothm.edu.pk") {
+            role = "admin";
+            if (user.role !== "admin") {
+                user.role = "admin";
+                await user.save();
+            }
         }
 
         res.json({
             message: "Login Success",
             user: {
                 _id: user._id,
+                email: user.email,
+                name: `${user.firstName} ${user.lastName}`,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                email: user.email,
-                role: user.role,
-                course: user.course,
-                batchNumber: user.batchNumber
+                regNumber: user.regNumber,
+                program: user.program,
+                batch: user.program,
+                role: role
             }
         });
     } catch (err) {
         console.error("Login Error:", err);
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ error: "Server error: " + err.message });
     }
 });
 
-// 2. REGISTER (For Students)
-app.post('/api/auth/register', async (req, res) => {
-    try {
-        const { firstName, lastName, email, password, course, batchNumber } = req.body;
-        
-        const existing = await User.findOne({ email });
-        if (existing) return res.status(400).json({ message: "Email already exists" });
-
-        // Encrypt Password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUser = new User({
-            firstName, lastName, email,
-            password: hashedPassword,
-            course: course || "N/A",
-            batchNumber: batchNumber || "N/A",
-            role: "student"
-        });
-
-        await newUser.save();
-        res.status(200).json({ message: "Registration Successful" });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
-// 3. ADMIN FIX (Reset Admin Account)
-app.get('/api/fix-admin', async (req, res) => {
+// CREATE ADMIN (Helper route)
+app.get('/api/create-admin', async (req, res) => {
     try {
         await User.deleteOne({ email: "admin@cothm.edu.pk" });
-        await User.create({
-            firstName: "System", lastName: "Admin",
+        
+        const admin = new User({
+            firstName: "Admin",
+            lastName: "COTHM",
             email: "admin@cothm.edu.pk",
-            password: "admin123", // Plain text for guaranteed access
-            role: "supervisor",
-            course: "Admin", batchNumber: "000"
+            password: "admin123",
+            role: "admin",
+            regNumber: "ADMIN001",
+            program: "Administration"
         });
-        res.send("Admin Reset. Login with: admin@cothm.edu.pk / admin123");
-    } catch (err) { res.send(err.message); }
+        
+        await admin.save();
+        res.send("✅ Admin created! Login with: admin@cothm.edu.pk / admin123");
+    } catch (err) {
+        res.status(500).send("Error: " + err.message);
+    }
 });
 
-// 4. PROJECT DATA
-app.get('/api/projects/all', async (req, res) => {
-    const projects = await Project.find().sort({ updatedAt: -1 });
-    res.json(projects);
-});
-
-app.get('/api/projects/my-projects', async (req, res) => {
-    const p = await Project.findOne({ studentEmail: req.query.email });
-    res.json(p ? [p] : []);
-});
-
+// FILE UPLOAD
 app.post('/api/submit', upload.single("file"), async (req, res) => {
+    console.log("\n📥 Upload request");
+    
     try {
-        if (!req.file) return res.status(400).json({ error: "No file" });
-        const { studentEmail, studentName, stage, course, batchNumber } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
 
-        let project = await Project.findOne({ studentEmail });
-        if (!project) project = new Project({ studentEmail, studentName, course, batchNumber });
+        console.log("✅ File:", req.file.originalname);
+        console.log("🔗 Cloudinary URL:", req.file.path);
 
-        project.submissions.push({
-            stage, fileName: req.file.originalname, fileUrl: req.file.path, date: new Date()
+        const { studentEmail, studentName, stage } = req.body;
+        
+        if (!studentEmail || !stage) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const fileUrl = req.file.path;
+
+        let project = await Project.findOne({ studentEmail: studentEmail.toLowerCase() });
+        
+        if (!project) {
+            const studentDetails = await User.findOne({ email: studentEmail.toLowerCase() });
+            project = new Project({
+                studentEmail: studentEmail.toLowerCase(),
+                studentName: studentName || "Unknown",
+                regNumber: studentDetails?.regNumber || "N/A",
+                program: studentDetails?.program || "N/A",
+                batch: studentDetails?.program || "N/A"
+            });
+        }
+
+        project.submissions.push({ 
+            stage, 
+            fileUrl, 
+            submittedAt: new Date() 
         });
-        project.status = "Pending Review";
+        project.currentStage = stage;
+        project.status = 'Pending Review';
+        
         await project.save();
-        res.json({ message: "Uploaded" });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+        
+        console.log("✅ Saved\n");
+        
+        res.json({
+            message: "Upload successful!",
+            fileUrl: fileUrl
+        });
+        
+    } catch (err) {
+        console.error("Upload Error:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// USER UPLOAD (For PortalDashboard)
+app.post('/api/user/upload', upload.single("file"), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No file" });
+        }
+
+        const { email, studentName, regNumber, batch } = req.body;
+        const fileUrl = req.file.path;
+
+        let project = await Project.findOne({ studentEmail: email.toLowerCase() });
+        
+        if (!project) {
+            project = new Project({
+                studentEmail: email.toLowerCase(),
+                studentName: studentName || "Unknown",
+                regNumber: regNumber || "N/A",
+                program: batch || "N/A",
+                batch: batch || "N/A"
+            });
+        }
+
+        project.submissions.push({ 
+            stage: "Thesis", 
+            fileUrl, 
+            submittedAt: new Date() 
+        });
+        project.status = 'Pending Review';
+        
+        await project.save();
+        
+        res.json({ message: "Upload successful", fileUrl });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET USER PROJECT
+app.get('/api/user/my-project', async (req, res) => {
+    try {
+        const { email } = req.query;
+        const project = await Project.findOne({ studentEmail: email.toLowerCase() });
+        
+        if (!project) {
+            return res.json({ submissions: [], status: "Not Started" });
+        }
+        
+        res.json(project);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET STATUS
+app.get('/api/status/:email', async (req, res) => {
+    try {
+        const project = await Project.findOne({ 
+            studentEmail: req.params.email.toLowerCase() 
+        });
+        
+        if (!project) {
+            return res.json({ 
+                status: "Not Started", 
+                currentStage: "None" 
+            });
+        }
+        
+        res.json(project);
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// GET PROFILE
+app.get('/api/profile/:email', async (req, res) => {
+    try {
+        const user = await User.findOne({ 
+            email: req.params.email.toLowerCase() 
+        });
+        res.json(user || {});
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// ADMIN: GET ALL PROJECTS
+app.get('/api/admin/projects', async (req, res) => {
+    try {
+        const projects = await Project.find().sort({ updatedAt: -1 });
+        res.json(projects);
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// ADMIN: UPDATE STATUS
+app.post('/api/admin/update', async (req, res) => {
+    try {
+        const { email, status } = req.body;
+        
+        const project = await Project.findOneAndUpdate(
+            { studentEmail: email.toLowerCase() },
+            { status: status, updatedAt: new Date() },
+            { new: true }
+        );
+        
+        if (!project) {
+            return res.status(404).json({ error: "Project not found" });
+        }
+        
+        res.json({ message: "Updated successfully" });
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// ============================================
+// START SERVER
+// ============================================
+app.listen(PORT, () => {
+    console.log(`\n🚀 Server running on port ${PORT}`);
+    console.log(`☁️  Cloudinary: ${cloudinary.config().cloud_name}`);
+    console.log(`📊 Database: ${mongoose.connection.name}\n`);
+});

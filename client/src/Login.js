@@ -6,21 +6,62 @@ import { FaEnvelope, FaLock, FaArrowRight, FaUniversity, FaCheckCircle } from "r
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  
   const API_URL = "https://cothm-research-portal.onrender.com";
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(""); // Clear error when user types
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
+    
     try {
-      const res = await axios.post(`${API_URL}/login`, formData);
+      console.log("🔐 Attempting login for:", formData.email);
+      
+      // Try the correct endpoint
+      const res = await axios.post(`${API_URL}/api/auth/login`, formData);
+      
+      console.log("✅ Login successful:", res.data);
+      
+      // Save user data to localStorage
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      navigate(res.data.user.role === "admin" ? "/admin" : "/dashboard");
+      
+      // Navigate based on role
+      const userRole = res.data.user.role;
+      
+      if (userRole === "supervisor" || userRole === "admin") {
+        console.log("🔑 Admin/Supervisor access granted");
+        navigate("/admin");
+      } else {
+        console.log("👤 Student access granted");
+        navigate("/dashboard");
+      }
+      
     } catch (err) {
-      alert("❌ " + (err.response?.data?.error || "Login Failed"));
-    } finally { setLoading(false); }
+      console.error("❌ Login error:", err);
+      
+      // User-friendly error messages
+      let errorMsg = "Login failed. Please try again.";
+      
+      if (err.response) {
+        // Server responded with error
+        errorMsg = err.response.data.message || err.response.data.error || errorMsg;
+      } else if (err.request) {
+        // No response from server
+        errorMsg = "Cannot connect to server. Please check your internet connection.";
+      }
+      
+      setError(errorMsg);
+      
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -48,25 +89,39 @@ const Login = () => {
             <p className="text-muted">Please enter your details to sign in.</p>
           </div>
 
+          {/* Error Alert */}
+          {error && (
+            <div className="alert alert-danger alert-dismissible fade show" role="alert">
+              <strong>❌ Error:</strong> {error}
+              <button type="button" className="btn-close" onClick={() => setError("")}></button>
+            </div>
+          )}
+
           <form onSubmit={handleLogin}>
-            <div className="form-floating-custom">
+            <div className="form-floating-custom mb-3">
               <input 
                 type="email" 
                 name="email" 
                 placeholder="Email Address" 
                 onChange={handleChange} 
+                value={formData.email}
                 required 
+                disabled={loading}
+                className="form-control"
               />
               <FaEnvelope className="field-icon" />
             </div>
 
-            <div className="form-floating-custom">
+            <div className="form-floating-custom mb-3">
               <input 
                 type="password" 
                 name="password" 
                 placeholder="Password" 
                 onChange={handleChange} 
+                value={formData.password}
                 required 
+                disabled={loading}
+                className="form-control"
               />
               <FaLock className="field-icon" />
             </div>
@@ -74,23 +129,53 @@ const Login = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div className="form-check">
                 <input className="form-check-input" type="checkbox" id="remember" />
-                <label className="form-check-label small text-muted" htmlFor="remember">Remember me</label>
+                <label className="form-check-label small text-muted" htmlFor="remember">
+                  Remember me
+                </label>
               </div>
-              <Link to="/forgot-password" style={{fontSize: "0.9rem", color: "#007bff", textDecoration: "none"}}>Forgot Password?</Link>
+              <Link to="/forgot-password" style={{fontSize: "0.9rem", color: "#007bff", textDecoration: "none"}}>
+                Forgot Password?
+              </Link>
             </div>
 
-            <button type="submit" className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm d-flex align-items-center justify-content-center" disabled={loading}>
-              {loading ? "Authenticating..." : <>Sign In <FaArrowRight className="ms-2"/></>}
+            <button 
+              type="submit" 
+              className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm d-flex align-items-center justify-content-center" 
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                  Authenticating...
+                </>
+              ) : (
+                <>
+                  Sign In <FaArrowRight className="ms-2"/>
+                </>
+              )}
             </button>
           </form>
 
           <div className="text-center mt-5">
             <span className="text-muted">Don't have an account? </span>
-            <Link to="/signup" className="fw-bold text-navy text-decoration-none">Create an account</Link>
+            <Link to="/signup" className="fw-bold text-navy text-decoration-none">
+              Create an account
+            </Link>
+          </div>
+          
+          {/* Test Credentials Helper */}
+          <div className="mt-4 p-3 bg-light rounded-3 small">
+            <div className="fw-bold mb-2 text-navy">🧪 Test Login Credentials:</div>
+            <div className="text-muted">
+              <strong>Admin/Supervisor:</strong><br/>
+              Email: admin@cothm.edu.pk<br/>
+              Password: admin123
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default Login;

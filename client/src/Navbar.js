@@ -13,23 +13,25 @@ const Navbar = () => {
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark fixed-top navbar-glass">
-      <div className="container-fluid px-4">
+      <div className="container-fluid px-3">
         {/* BRAND SECTION */}
-        <Link className="navbar-brand d-flex align-items-center gap-3" to={user ? "/dashboard" : "/"}>
-          {/* INCREASED LOGO SIZE HERE (65px) */}
+        <Link className="navbar-brand d-flex align-items-center gap-2" to={user ? "/dashboard" : "/"}>
           <img 
             src="/logo.png" 
             alt="COTHM Logo" 
-            style={{ height: "65px", objectFit: "contain" }} 
+            style={{ height: "45px", objectFit: "contain" }} /* Reduced Height */
             className="d-inline-block align-text-top"
           />
-          <span style={{ 
+          {/* COMPACT TITLE STYLING */}
+          <span className="d-none d-sm-block" style={{ 
             fontFamily: "'Poppins', sans-serif", 
             fontWeight: "700", 
-            letterSpacing: "1px",
+            fontSize: "1rem", /* Reduced to 16px (Standard size) */
+            letterSpacing: "0.5px",
             background: "linear-gradient(to right, #fff, #c5a059)",
             WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent"
+            WebkitTextFillColor: "transparent",
+            whiteSpace: "nowrap"
           }}>
             COTHM RESEARCH PORTAL
           </span>
@@ -61,9 +63,12 @@ const Navbar = () => {
               </>
             ) : (
               <>
+                {/* User Info - Compact Layout */}
                 <li className="nav-item text-end d-none d-lg-block">
-                  <div className="text-white small fw-bold">Welcome, {user.firstName}</div>
-                  <div className="text-warning" style={{ fontSize: "0.75rem", letterSpacing: "0.5px" }}>
+                  <div className="text-white fw-bold" style={{ fontSize: "0.85rem" }}>
+                    Welcome, {user.firstName}
+                  </div>
+                  <div className="text-warning" style={{ fontSize: "0.7rem" }}>
                     {user.role === "supervisor" ? "SUPERVISOR" : `BATCH ${user.batchNumber || "N/A"}`}
                   </div>
                 </li>

@@ -7,6 +7,7 @@ import {
   FaFolderOpen, FaTrash, FaUpload, FaChartPie, FaFileDownload
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+// 
 import { 
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
@@ -118,46 +119,58 @@ const AdminDashboard = () => {
 
   // --- ACTIONS ---
   const handleUpdate = async (status) => {
-    if (status === "Rejected" && !feedback.trim()) return showToast("Reason required for rejection", "error");
+    if (status === "Rejected" && !feedback.trim()) {
+      showToast("Please provide a reason for rejection", "error");
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       await axios.post(`${API_URL}/api/admin/update`, {
         email: selectedProject.studentEmail, status, comment: feedback
       });
-      showToast(`Project ${status} Successfully!`);
+      showToast(`Project ${status} Successfully!`, "success");
       fetchData(); handleCloseReview(); 
-    } catch (err) { showToast("Update failed", "error"); } 
+    } catch (err) { showToast("Update failed. Server Error.", "error"); } 
     finally { setIsSubmitting(false); }
   };
 
   const postAnnouncement = async () => {
     if(!newAnnouncement.title) return showToast("Title required", "error");
-    await axios.post(`${API_URL}/api/announcements`, newAnnouncement);
-    setNewAnnouncement({ title: "", message: "" });
-    showToast("Announcement Posted");
-    fetchData();
+    try {
+      await axios.post(`${API_URL}/api/announcements`, newAnnouncement);
+      setNewAnnouncement({ title: "", message: "" });
+      showToast("Announcement Posted");
+      fetchData();
+    } catch (err) { showToast("Failed to post", "error"); }
   };
 
   const setDeadline = async () => {
-    await axios.post(`${API_URL}/api/settings`, { deadline: newDeadline });
-    showToast("Deadline Updated");
+    try {
+      await axios.post(`${API_URL}/api/settings`, { deadline: newDeadline });
+      showToast("Deadline Updated");
+    } catch (err) { showToast("Failed to set deadline", "error"); }
   };
 
   const uploadResource = async () => {
     if(!newResource.file) return showToast("File required", "error");
-    const fd = new FormData();
-    fd.append("title", newResource.title); fd.append("category", newResource.category); fd.append("file", newResource.file);
-    await axios.post(`${API_URL}/api/resources`, fd);
-    setNewResource({ title: "", category: "Guidelines", file: null });
-    showToast("Resource Uploaded");
-    fetchData();
+    try {
+      const fd = new FormData();
+      fd.append("title", newResource.title); fd.append("category", newResource.category); fd.append("file", newResource.file);
+      await axios.post(`${API_URL}/api/resources`, fd);
+      setNewResource({ title: "", category: "Guidelines", file: null });
+      showToast("Resource Uploaded");
+      fetchData();
+    } catch (err) { showToast("Upload failed", "error"); }
   };
 
   const handleDelete = async (type, id) => {
     if(!window.confirm("Are you sure?")) return;
-    await axios.delete(`${API_URL}/api/${type}/${id}`);
-    showToast("Deleted successfully");
-    fetchData();
+    try {
+      await axios.delete(`${API_URL}/api/${type}/${id}`);
+      showToast("Deleted successfully");
+      fetchData();
+    } catch (err) { showToast("Delete failed", "error"); }
   };
 
   const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
@@ -174,6 +187,7 @@ const AdminDashboard = () => {
   });
 
   const getStatusColor = (s) => s === 'Approved' ? 'status-approved' : s === 'Rejected' ? 'status-rejected' : 'status-pending';
+  
   const counts = {
     All: projects.length,
     Pending: projects.filter(p => p.status === 'Pending Review').length,
@@ -202,6 +216,7 @@ const AdminDashboard = () => {
         .tab.active { background: var(--primary); color: white; shadow: 0 2px 8px rgba(30, 60, 114, 0.3); }
         .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; padding: 20px; position: relative; overflow: hidden; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); border-color: #cbd5e1; }
         .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; height: fit-content; }
         .status-approved { background: #dcfce7; color: #166534; } .status-rejected { background: #fee2e2; color: #991b1b; } .status-pending { background: #fef3c7; color: #92400e; }
         .review-btn { width: 100%; margin-top: 15px; padding: 12px; background: white; border: 1px solid var(--primary); color: var(--primary); border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
@@ -352,18 +367,23 @@ const AdminDashboard = () => {
       {selectedProject && (
         <div className="modal-overlay" onClick={handleCloseReview}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3>Reviewing: {selectedProject.studentName}</h3>
-            <div className="doc-preview">
-              {selectedProject.submissions.length > 0 ? (
-                <a href={selectedProject.submissions[selectedProject.submissions.length-1].fileUrl} target="_blank" rel="noreferrer" className="doc-link">
-                  <FaFilePdf size={20} color="red"/> Open Document <FaExternalLinkAlt/>
-                </a>
-              ) : "No document"}
+            <div className="modal-header">
+              <div><h3>Reviewing: {selectedProject.studentName}</h3></div>
+              <button className="modal-close" onClick={handleCloseReview}><FaTimes/></button>
             </div>
-            <textarea className="feedback-area" placeholder="Feedback..." value={feedback} onChange={e => setFeedback(e.target.value)}/>
-            <div className="modal-actions">
-              <button className="btn-action btn-reject" disabled={isSubmitting} onClick={() => handleUpdate("Rejected")}><FaTimesCircle/> Reject</button>
-              <button className="btn-action btn-approve" disabled={isSubmitting} onClick={() => handleUpdate("Approved")}><FaCheckCircle/> Approve</button>
+            <div className="modal-body">
+              <div className="doc-preview">
+                {selectedProject.submissions.length > 0 ? (
+                  <a href={selectedProject.submissions[selectedProject.submissions.length-1].fileUrl} target="_blank" rel="noreferrer" className="doc-link">
+                    <FaFilePdf size={20} color="red"/> Open Document <FaExternalLinkAlt/>
+                  </a>
+                ) : "No document"}
+              </div>
+              <textarea className="feedback-area" placeholder="Feedback..." value={feedback} onChange={e => setFeedback(e.target.value)}/>
+              <div className="modal-actions">
+                <button className="btn-action btn-reject" disabled={isSubmitting} onClick={() => handleUpdate("Rejected")}><FaTimesCircle/> Reject</button>
+                <button className="btn-action btn-approve" disabled={isSubmitting} onClick={() => handleUpdate("Approved")}><FaCheckCircle/> Approve</button>
+              </div>
             </div>
           </div>
         </div>

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaLock, FaEnvelope, FaEye, FaEyeSlash } from "react-icons/fa";
-import logo from "./logo.png"; // ✅ COTHM Logo Restored
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
+import logo from "./logo.png"; 
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -21,253 +21,171 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     if(!formData.email || !formData.password) {
-      setError("Please enter both email and password.");
+      setError("Please enter your credentials.");
       return;
     }
-    
     setLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/auth/login`, formData);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       
-      if (res.data.user.role === "supervisor" || res.data.user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard");
-      }
+      const role = res.data.user.role;
+      navigate(role === "supervisor" || role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid credentials. Please try again.");
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
+    <div className="split-screen">
       <style>{`
-        :root {
-          --primary: #1e3c72; /* COTHM Navy */
-          --primary-dark: #162c55;
-          --gold: #d4af37;    /* COTHM Gold */
-          --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        :root { --primary: #1e3c72; --gold: #d4af37; }
+        body { margin: 0; font-family: 'Inter', sans-serif; overflow: hidden; }
+
+        .split-screen { display: flex; height: 100vh; width: 100vw; }
+
+        /* LEFT SIDE - IMAGE & BRANDING */
+        .left-pane {
+          flex: 1;
+          background: linear-gradient(rgba(30, 60, 114, 0.9), rgba(42, 82, 152, 0.8)), 
+                      url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1920&auto=format&fit=crop');
+          background-size: cover;
+          background-position: center;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: 60px;
+          color: white;
+          position: relative;
         }
+        
+        .left-content { max-width: 500px; animation: slideRight 0.8s ease-out; }
+        .hero-title { font-size: 3rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
+        .hero-text { font-size: 1.1rem; opacity: 0.9; line-height: 1.6; }
+        .hero-gold { color: var(--gold); }
 
-        body { margin: 0; font-family: 'Inter', sans-serif; background: #f3f4f6; }
-
-        .auth-container {
-          min-height: 100vh;
+        /* RIGHT SIDE - FORM */
+        .right-pane {
+          flex: 1;
+          background: white;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--bg-gradient);
-          padding: 20px;
+          padding: 40px;
           position: relative;
-          overflow: hidden;
         }
 
-        /* Decorative Circles for Modern Feel */
-        .circle {
-          position: absolute;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(5px);
-          z-index: 0;
-        }
-        .c1 { width: 300px; height: 300px; top: -50px; left: -50px; }
-        .c2 { width: 200px; height: 200px; bottom: -50px; right: -50px; }
-
-        /* GLASS CARD */
-        .auth-card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(20px);
-          border-radius: 24px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-          width: 100%;
-          max-width: 420px;
-          overflow: hidden;
-          position: relative;
-          z-index: 10;
-          border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        /* HEADER SECTION */
-        .auth-header {
-          background: white;
-          padding: 40px 30px 20px;
-          text-align: center;
-          border-bottom: 1px solid #f0f2f5;
-        }
+        .login-wrapper { width: 100%; max-width: 400px; animation: fadeIn 1s ease-out; }
         
-        .brand-logo {
-          width: 100px; /* Perfect size for logo */
-          height: auto;
-          margin-bottom: 15px;
-          filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-          transition: transform 0.3s;
-        }
-        .brand-logo:hover { transform: scale(1.05); }
+        .brand-header { margin-bottom: 40px; }
+        .brand-logo { width: 80px; margin-bottom: 15px; }
+        .welcome-text { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0; }
+        .sub-text { color: #64748b; margin-top: 5px; }
 
-        .brand-title {
-          font-size: 22px;
-          font-weight: 800;
-          color: var(--primary);
-          margin: 0;
-          letter-spacing: -0.5px;
-          text-transform: uppercase;
-        }
-        .brand-subtitle {
-          color: #64748b;
-          font-size: 13px;
-          margin-top: 6px;
-          font-weight: 500;
-        }
-
-        /* FORM SECTION */
-        .auth-form { padding: 30px; }
-        
-        .input-group { position: relative; margin-bottom: 20px; }
-        .input-icon {
-          position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-          color: #94a3b8; font-size: 18px; transition: color 0.3s;
-        }
-        
+        /* INPUTS */
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-label { display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; }
         .form-input {
-          width: 100%;
-          padding: 14px 14px 14px 48px;
-          border: 2px solid #e2e8f0;
-          border-radius: 12px;
-          font-size: 15px;
-          outline: none;
-          transition: all 0.3s;
-          box-sizing: border-box;
-          color: #334155;
-          background: #f8fafc;
+          width: 100%; padding: 14px 14px 14px 45px;
+          border: 2px solid #e2e8f0; border-radius: 12px;
+          font-size: 15px; outline: none; transition: 0.2s;
+          box-sizing: border-box; color: #1e293b;
         }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1); }
         
-        /* COTHM Gold Focus Effect */
-        .form-input:focus {
-          border-color: var(--gold);
-          background: white;
-          box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
-        }
-        .form-input:focus + .input-icon { color: var(--gold); }
+        .input-icon { position: absolute; left: 15px; bottom: 15px; color: #94a3b8; }
+        .password-toggle { position: absolute; right: 15px; bottom: 15px; color: #94a3b8; cursor: pointer; }
 
-        .password-toggle {
-          position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-          color: #94a3b8; cursor: pointer; padding: 5px;
+        /* BUTTON */
+        .btn-login {
+          width: 100%; padding: 16px; background: var(--primary);
+          color: white; border: none; border-radius: 12px;
+          font-size: 16px; font-weight: 700; cursor: pointer;
+          transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .password-toggle:hover { color: var(--primary); }
+        .btn-login:hover { background: #162c55; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(30, 60, 114, 0.2); }
+        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
 
-        /* BUTTONS */
-        .btn-primary {
-          width: 100%;
-          padding: 14px;
-          background: var(--primary);
-          color: white;
-          border: none;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 16px;
-          cursor: pointer;
-          transition: all 0.2s;
-          margin-top: 10px;
-          box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);
-        }
-        .btn-primary:hover {
-          background: var(--primary-dark);
-          transform: translateY(-2px);
-          box-shadow: 0 6px 15px rgba(30, 60, 114, 0.3);
-        }
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+        /* LINKS */
+        .action-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; font-size: 14px; }
+        .forgot-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .signup-text { text-align: center; margin-top: 30px; color: #64748b; }
+        .signup-link { color: var(--primary); font-weight: 700; text-decoration: none; }
 
-        .forgot-link {
-          display: block; text-align: right;
-          color: var(--primary); font-size: 13px; font-weight: 600;
-          text-decoration: none; margin-bottom: 24px; transition: color 0.2s;
-        }
-        .forgot-link:hover { color: var(--gold); text-decoration: underline; }
+        .error-msg { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; text-align: center; }
 
-        /* FOOTER */
-        .auth-footer {
-          text-align: center; margin-top: 25px;
-          font-size: 14px; color: #64748b;
-        }
-        .signup-link {
-          color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 5px;
-        }
-        .signup-link:hover { color: var(--gold); text-decoration: underline; }
+        /* ANIMATIONS */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideRight { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
 
-        /* ERROR MESSAGE */
-        .error-box {
-          background: #fee2e2; border-left: 4px solid #ef4444;
-          color: #991b1b; padding: 12px 15px; border-radius: 8px;
-          font-size: 13px; margin-bottom: 20px; font-weight: 500;
-          display: flex; align-items: center;
-        }
-
-        /* MOBILE OPTIMIZATION */
-        @media (max-width: 480px) {
-          .auth-card { border-radius: 0; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
-          .circle { display: none; } /* Remove decorations on small screens for cleanliness */
+        /* MOBILE */
+        @media (max-width: 900px) {
+          .left-pane { display: none; } /* Hide image on tablet/mobile */
+          .right-pane { background: #f8fafc; }
+          .login-wrapper { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         }
       `}</style>
 
-      {/* Background Decorations */}
-      <div className="circle c1"></div>
-      <div className="circle c2"></div>
-
-      <div className="auth-card">
-        <div className="auth-header">
-          {/* ✅ COTHM LOGO HERE */}
-          <img src={logo} alt="COTHM Logo" className="brand-logo" />
-          <h1 className="brand-title">Research Portal</h1>
-          <p className="brand-subtitle">Login to manage your thesis & projects</p>
+      {/* LEFT SIDE (Branding) */}
+      <div className="left-pane">
+        <div className="left-content">
+          <h1 className="hero-title">Welcome to <br/> <span className="hero-gold">COTHM</span> Portal</h1>
+          <p className="hero-text">
+            Streamline your research journey. Submit theses, track approvals, and access academic resources in one secure platform.
+          </p>
         </div>
+      </div>
 
-        <form className="auth-form" onSubmit={handleLogin}>
-          {error && <div className="error-box">{error}</div>}
-
-          <div className="input-group">
-            <input 
-              type="email" 
-              name="email" 
-              className="form-input" 
-              placeholder="Student Email" 
-              value={formData.email}
-              onChange={handleChange}
-              required 
-            />
-            <FaEnvelope className="input-icon" />
+      {/* RIGHT SIDE (Form) */}
+      <div className="right-pane">
+        <div className="login-wrapper">
+          <div className="brand-header">
+            <img src={logo} alt="Logo" className="brand-logo" />
+            <h2 className="welcome-text">Student Login</h2>
+            <p className="sub-text">Please enter your details to continue.</p>
           </div>
 
-          <div className="input-group">
-            <input 
-              type={showPassword ? "text" : "password"} 
-              name="password" 
-              className="form-input" 
-              placeholder="Password" 
-              value={formData.password}
-              onChange={handleChange}
-              required 
-            />
-            <FaLock className="input-icon" />
-            <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
+          <form onSubmit={handleLogin}>
+            {error && <div className="error-msg">{error}</div>}
+
+            <div className="input-group">
+              <label className="input-label">Email Address</label>
+              <input 
+                type="email" name="email" className="form-input" 
+                placeholder="student@cothm.edu.pk" 
+                value={formData.email} onChange={handleChange} required 
+              />
+              <FaEnvelope className="input-icon" />
             </div>
-          </div>
 
-          <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
+            <div className="input-group">
+              <label className="input-label">Password</label>
+              <input 
+                type={showPassword ? "text" : "password"} name="password" className="form-input" 
+                placeholder="••••••••" 
+                value={formData.password} onChange={handleChange} required 
+              />
+              <FaLock className="input-icon" />
+              <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </div>
+            </div>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Signing in..." : "Access Portal"}
-          </button>
+            <div className="action-row">
+              <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
+            </div>
 
-          <div className="auth-footer">
-            New Student? 
-            <Link to="/signup" className="signup-link">Create Account</Link>
-          </div>
-        </form>
+            <button type="submit" className="btn-login" disabled={loading}>
+              {loading ? "Verifying..." : <>Login <FaArrowRight /></>}
+            </button>
+
+            <p className="signup-text">
+              Don't have an account? <Link to="/signup" className="signup-link">Register Now</Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );

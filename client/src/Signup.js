@@ -2,149 +2,138 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaUser, FaEnvelope, FaLock, FaIdCard, FaGraduationCap } from "react-icons/fa";
-import logo from "./logo.png"; // ✅ COTHM Logo
+import logo from "./logo.png"; 
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    course: "Computer Science",
-    batchNumber: ""
+    firstName: "", lastName: "", email: "", password: "",
+    course: "Computer Science", batchNumber: ""
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   
   const navigate = useNavigate();
   const API_URL = "https://cothm-research-portal.onrender.com";
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
     try {
       await axios.post(`${API_URL}/api/auth/register`, formData);
-      alert("✅ Account Created Successfully! Please Login.");
+      alert("✅ Account Created! Please Login.");
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      alert("Registration failed. Email may already exist.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      {/* Reusing Styles for Consistency */}
+    <div className="split-screen">
+      {/* Reusing Styles from Login for Consistency */}
       <style>{`
-        :root {
-          --primary: #1e3c72;
-          --gold: #d4af37;
-          --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: #f3f4f6; }
-        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-gradient); padding: 20px; position: relative; }
+        :root { --primary: #1e3c72; --gold: #d4af37; }
+        body { margin: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .split-screen { display: flex; height: 100vh; width: 100vw; }
         
-        .auth-card {
-          background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
-          border-radius: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-          width: 100%; max-width: 500px; overflow: hidden; position: relative; z-index: 10;
+        .left-pane {
+          flex: 1;
+          background: linear-gradient(rgba(30, 60, 114, 0.9), rgba(42, 82, 152, 0.8)), 
+                      url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1920');
+          background-size: cover; background-position: center;
+          display: flex; flex-direction: column; justify-content: center; padding: 60px; color: white;
         }
+        .hero-title { font-size: 3rem; font-weight: 800; margin-bottom: 20px; }
+        .hero-gold { color: var(--gold); }
+        .hero-text { font-size: 1.1rem; opacity: 0.9; }
 
-        .auth-header { background: white; padding: 30px 30px 20px; text-align: center; border-bottom: 1px solid #f0f2f5; }
-        .brand-logo { width: 90px; height: auto; margin-bottom: 10px; }
-        .brand-title { font-size: 20px; font-weight: 800; color: var(--primary); margin: 0; text-transform: uppercase; }
-        .brand-subtitle { color: #64748b; font-size: 13px; margin-top: 5px; }
+        .right-pane { flex: 1; background: white; display: flex; align-items: center; justify-content: center; padding: 40px; overflow-y: auto; }
+        .login-wrapper { width: 100%; max-width: 450px; animation: fadeIn 1s ease-out; }
+        
+        .brand-header { margin-bottom: 30px; text-align: center; }
+        .brand-logo { width: 70px; margin-bottom: 10px; }
+        .welcome-text { font-size: 24px; font-weight: 700; color: #1e293b; }
 
-        .auth-form { padding: 30px; }
         .form-row { display: flex; gap: 15px; }
-        .input-group { position: relative; margin-bottom: 15px; flex: 1; }
-        .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
+        .input-group { margin-bottom: 15px; position: relative; width: 100%; }
+        .form-input { width: 100%; padding: 12px 12px 12px 40px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; box-sizing: border-box; }
+        .form-input:focus { border-color: var(--primary); }
+        .input-icon { position: absolute; left: 12px; top: 14px; color: #94a3b8; }
         
-        .form-input {
-          width: 100%; padding: 12px 12px 12px 48px; border: 2px solid #e2e8f0; border-radius: 12px;
-          font-size: 14px; outline: none; transition: all 0.3s; box-sizing: border-box; color: #334155; background: #f8fafc;
-        }
-        .form-input:focus { border-color: var(--gold); background: white; }
+        .btn-login { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-login:hover { background: #162c55; transform: translateY(-2px); }
         
-        .btn-primary {
-          width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px;
-          font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; margin-top: 15px;
-        }
-        .btn-primary:hover { background: #102a56; transform: translateY(-2px); }
+        .signup-text { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
+        .signup-link { color: var(--primary); font-weight: 700; text-decoration: none; }
         
-        .auth-footer { text-align: center; margin-top: 20px; font-size: 14px; color: #64748b; }
-        .login-link { color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 5px; }
-        .login-link:hover { color: var(--gold); text-decoration: underline; }
-        .error-box { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: center; }
-        
-        select.form-input { appearance: none; background: #f8fafc; cursor: pointer; }
-        
-        @media (max-width: 480px) { .form-row { flex-direction: column; gap: 0; } }
+        select.form-input { appearance: none; background: white; cursor: pointer; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 900px) { .left-pane { display: none; } .right-pane { background: #f8fafc; } .login-wrapper { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); } }
       `}</style>
 
-      <div className="auth-card">
-        <div className="auth-header">
-          <img src={logo} alt="COTHM Logo" className="brand-logo" />
-          <h1 className="brand-title">Student Registration</h1>
-          <p className="brand-subtitle">Create your account to start submitting research</p>
+      <div className="left-pane">
+        <div style={{maxWidth: 500}}>
+          <h1 className="hero-title">Join <span className="hero-gold">COTHM</span> Today</h1>
+          <p className="hero-text">Start your academic journey with the best tools for research and collaboration.</p>
         </div>
+      </div>
 
-        <form className="auth-form" onSubmit={handleSignup}>
-          {error && <div className="error-box">{error}</div>}
+      <div className="right-pane">
+        <div className="login-wrapper">
+          <div className="brand-header">
+            <img src={logo} alt="Logo" className="brand-logo" />
+            <h2 className="welcome-text">Create Account</h2>
+          </div>
 
-          <div className="form-row">
-            <div className="input-group">
-              <FaUser className="input-icon" />
-              <input type="text" name="firstName" className="form-input" placeholder="First Name" onChange={handleChange} required />
+          <form onSubmit={handleSignup}>
+            <div className="form-row">
+              <div className="input-group">
+                <FaUser className="input-icon" />
+                <input type="text" name="firstName" className="form-input" placeholder="First Name" onChange={handleChange} required />
+              </div>
+              <div className="input-group">
+                <FaUser className="input-icon" />
+                <input type="text" name="lastName" className="form-input" placeholder="Last Name" onChange={handleChange} required />
+              </div>
             </div>
+
             <div className="input-group">
-              <FaUser className="input-icon" />
-              <input type="text" name="lastName" className="form-input" placeholder="Last Name" onChange={handleChange} required />
+              <FaEnvelope className="input-icon" />
+              <input type="email" name="email" className="form-input" placeholder="Student Email" onChange={handleChange} required />
             </div>
-          </div>
 
-          <div className="input-group">
-            <FaEnvelope className="input-icon" />
-            <input type="email" name="email" className="form-input" placeholder="Student Email" onChange={handleChange} required />
-          </div>
+            <div className="form-row">
+              <div className="input-group">
+                <FaGraduationCap className="input-icon" />
+                <select name="course" className="form-input" onChange={handleChange}>
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Software Engineering">Software Engineering</option>
+                  <option value="Hospitality Management">Hospitality Management</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <FaIdCard className="input-icon" />
+                <input type="text" name="batchNumber" className="form-input" placeholder="Batch (e.g. 24)" onChange={handleChange} required />
+              </div>
+            </div>
 
-          <div className="form-row">
             <div className="input-group">
-              <FaGraduationCap className="input-icon" />
-              <select name="course" className="form-input" onChange={handleChange}>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Information Technology">Information Technology</option>
-                <option value="Software Engineering">Software Engineering</option>
-                <option value="Hospitality Management">Hospitality Management</option>
-              </select>
+              <FaLock className="input-icon" />
+              <input type="password" name="password" className="form-input" placeholder="Create Password" onChange={handleChange} required />
             </div>
-            <div className="input-group">
-              <FaIdCard className="input-icon" />
-              <input type="text" name="batchNumber" className="form-input" placeholder="Batch No (e.g. 24)" onChange={handleChange} required />
-            </div>
-          </div>
 
-          <div className="input-group">
-            <FaLock className="input-icon" />
-            <input type="password" name="password" className="form-input" placeholder="Create Password" onChange={handleChange} required />
-          </div>
+            <button type="submit" className="btn-login" disabled={loading}>
+              {loading ? "Registering..." : "Sign Up"}
+            </button>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Creating Account..." : "Sign Up"}
-          </button>
-
-          <div className="auth-footer">
-            Already registered? 
-            <Link to="/login" className="login-link">Login Here</Link>
-          </div>
-        </form>
+            <p className="signup-text">
+              Already have an account? <Link to="/login" className="signup-link">Login Here</Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );

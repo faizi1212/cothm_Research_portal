@@ -1,150 +1,237 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaGraduationCap } from "react-icons/fa";
-import logo from "./logo.png"; // ✅ Imports logo from src/logo.png
+import { FaUser, FaLock, FaUniversity, FaEnvelope, FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(null);
+  
   const navigate = useNavigate();
-
   const API_URL = "https://cothm-research-portal.onrender.com";
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(null); // Clear error when typing
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if(!formData.email || !formData.password) {
+      setError("Please fill in all fields");
+      return;
+    }
+    
     setLoading(true);
     try {
-      // ✅ Claude AI Fix: Correct Endpoint
       const res = await axios.post(`${API_URL}/api/auth/login`, formData);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       
-      // ✅ Claude AI Fix: Role-based redirect
-      if (res.data.user.role === "admin" || res.data.user.role === "supervisor") {
-        window.location.href = "/admin";
+      // Redirect based on role
+      if (res.data.user.role === "supervisor" || res.data.user.role === "admin") {
+        navigate("/admin");
       } else {
-        window.location.href = "/dashboard";
+        navigate("/dashboard");
       }
     } catch (err) {
-      alert("❌ " + (err.response?.data?.message || "Login Failed"));
+      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      {/* Left Side - Image/Brand */}
-      <div style={styles.leftPanel}>
-        <div style={styles.overlay}>
-          <div style={styles.brandContent}>
-            <div style={styles.iconCircle}>
-              <FaGraduationCap size={40} color="white" />
-            </div>
-            <h1 style={styles.brandTitle}>COTHM International</h1>
-            <p style={styles.brandText}>
-              Excellence in Hospitality & Management Education. 
-              <br />Secure Research Submission Portal.
-            </p>
-          </div>
+    <div className="auth-container">
+      <style>{`
+        :root {
+          --primary: #1e3c72;
+          --accent: #d4af37; /* COTHM Gold */
+          --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #f3f4f6; }
+
+        .auth-container {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-gradient);
+          padding: 20px;
+        }
+
+        /* CARD DESIGN */
+        .auth-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          border-radius: 20px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          width: 100%;
+          max-width: 450px;
+          overflow: hidden;
+          position: relative;
+        }
+
+        /* HEADER */
+        .auth-header {
+          background: #fff;
+          padding: 40px 30px 20px;
+          text-align: center;
+        }
+        .logo-icon {
+          width: 60px; height: 60px;
+          background: var(--primary);
+          color: white;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          margin: 0 auto 15px;
+          font-size: 28px;
+          box-shadow: 0 10px 15px -3px rgba(30, 60, 114, 0.3);
+        }
+        .brand-title {
+          font-size: 24px; font-weight: 800; color: var(--primary); margin: 0; letter-spacing: -0.5px;
+        }
+        .brand-subtitle {
+          color: #64748b; font-size: 14px; margin-top: 5px;
+        }
+
+        /* FORM */
+        .auth-form { padding: 30px; }
+        
+        .input-group {
+          position: relative; margin-bottom: 20px;
+        }
+        .input-icon {
+          position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+          color: #94a3b8; font-size: 18px; transition: color 0.3s;
+        }
+        .form-input {
+          width: 100%;
+          padding: 14px 14px 14px 45px;
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          font-size: 15px;
+          outline: none;
+          transition: all 0.3s;
+          box-sizing: border-box;
+          color: #334155;
+        }
+        .form-input:focus {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1);
+        }
+        .form-input:focus + .input-icon { color: var(--primary); }
+
+        .password-toggle {
+          position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+          color: #94a3b8; cursor: pointer;
+        }
+
+        /* BUTTONS */
+        .btn-primary {
+          width: 100%;
+          padding: 14px;
+          background: var(--primary);
+          color: white;
+          border: none;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 16px;
+          cursor: pointer;
+          transition: all 0.2s;
+          margin-top: 10px;
+        }
+        .btn-primary:hover {
+          background: #102a56;
+          transform: translateY(-2px);
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        .forgot-link {
+          display: block; text-align: right;
+          color: var(--primary); font-size: 13px; font-weight: 600;
+          text-decoration: none; margin-bottom: 20px;
+        }
+        .forgot-link:hover { text-decoration: underline; }
+
+        /* FOOTER */
+        .auth-footer {
+          text-align: center; margin-top: 25px;
+          font-size: 14px; color: #64748b;
+        }
+        .signup-link {
+          color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 5px;
+        }
+        .signup-link:hover { text-decoration: underline; }
+
+        /* ERROR MSG */
+        .error-box {
+          background: #fee2e2; border-left: 4px solid #ef4444;
+          color: #991b1b; padding: 12px; border-radius: 8px;
+          font-size: 14px; margin-bottom: 20px;
+        }
+
+        @media (max-width: 480px) {
+          .auth-card { border-radius: 0; height: 100vh; max-width: 100%; }
+        }
+      `}</style>
+
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="logo-icon"><FaUniversity /></div>
+          <h1 className="brand-title">COTHM Portal</h1>
+          <p className="brand-subtitle">Login to access your research dashboard</p>
         </div>
-      </div>
 
-      {/* Right Side - Login Form */}
-      <div style={styles.rightPanel}>
-        <div style={styles.formContainer}>
-          <div style={styles.logoHeader}>
-            <img src={logo} alt="COTHM Logo" style={styles.logoImage} />
-            <h2 style={styles.welcomeText}>Welcome Back!</h2>
-            <p style={styles.subText}>Please access your dashboard</p>
+        <form className="auth-form" onSubmit={handleLogin}>
+          {error && <div className="error-box">{error}</div>}
+
+          <div className="input-group">
+            <FaEnvelope className="input-icon" />
+            <input 
+              type="email" 
+              name="email" 
+              className="form-input" 
+              placeholder="Email Address" 
+              value={formData.email}
+              onChange={handleChange}
+              required 
+            />
           </div>
 
-          <form onSubmit={handleLogin}>
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Email Address</label>
-              <div style={styles.inputWrapper}>
-                <FaEnvelope style={styles.inputIcon} />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  onChange={handleChange}
-                  required
-                  style={styles.input}
-                />
-              </div>
+          <div className="input-group">
+            <FaLock className="input-icon" />
+            <input 
+              type={showPassword ? "text" : "password"} 
+              name="password" 
+              className="form-input" 
+              placeholder="Password" 
+              value={formData.password}
+              onChange={handleChange}
+              required 
+            />
+            <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
             </div>
-
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Password</label>
-              <div style={styles.inputWrapper}>
-                <FaLock style={styles.inputIcon} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Enter your password"
-                  onChange={handleChange}
-                  required
-                  style={styles.input}
-                />
-                <span onClick={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-              
-              {/* ✅ NEW: Forgot Password Link */}
-              <div style={styles.forgotPassContainer}>
-                <Link to="/forgot-password" style={styles.forgotPassLink}>
-                  Forgot Password?
-                </Link>
-              </div>
-            </div>
-
-            <button type="submit" disabled={loading} style={styles.loginBtn}>
-              {loading ? "Authenticating..." : <>Sign In <FaArrowRight /></>}
-            </button>
-          </form>
-
-          <div style={styles.footer}>
-            New Student? <Link to="/signup" style={styles.link}>Create Account</Link>
           </div>
-        </div>
+
+          <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
+
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? "Signing in..." : "Login"}
+          </button>
+
+          <div className="auth-footer">
+            Don't have an account? 
+            <Link to="/signup" className="signup-link">Create Account</Link>
+          </div>
+        </form>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: { display: "flex", minHeight: "100vh", fontFamily: "'Poppins', sans-serif", background: "#f8f9fc" },
-  leftPanel: { flex: 1, position: "relative", backgroundImage: "url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070')", backgroundSize: "cover", backgroundPosition: "center", display: "flex", alignItems: "center", justifyContent: "center" },
-  overlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "linear-gradient(135deg, rgba(30, 60, 114, 0.9) 0%, rgba(42, 82, 152, 0.8) 100%)", display: "flex", alignItems: "center", justifyContent: "center" },
-  brandContent: { color: "white", textAlign: "center", padding: "40px" },
-  iconCircle: { width: "80px", height: "80px", background: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", backdropFilter: "blur(10px)" },
-  brandTitle: { fontSize: "32px", fontWeight: "700", marginBottom: "15px", letterSpacing: "1px" },
-  brandText: { fontSize: "16px", opacity: 0.9, lineHeight: "1.6" },
-  rightPanel: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", background: "white" },
-  formContainer: { width: "100%", maxWidth: "420px" },
-  logoHeader: { textAlign: "center", marginBottom: "40px" },
-  logoImage: { height: "80px", marginBottom: "20px" }, 
-  welcomeText: { fontSize: "28px", fontWeight: "700", color: "#333", marginBottom: "8px" },
-  subText: { color: "#666", fontSize: "15px" },
-  inputGroup: { marginBottom: "25px" },
-  label: { display: "block", marginBottom: "10px", color: "#444", fontWeight: "600", fontSize: "14px" },
-  inputWrapper: { position: "relative", display: "flex", alignItems: "center" },
-  inputIcon: { position: "absolute", left: "15px", color: "#1e3c72" },
-  input: { width: "100%", padding: "15px 45px", borderRadius: "10px", border: "1px solid #e1e5ee", fontSize: "15px", outline: "none", transition: "all 0.3s", background: "#f8f9fc" },
-  eyeIcon: { position: "absolute", right: "15px", cursor: "pointer", color: "#999" },
-  
-  // ✅ NEW STYLES
-  forgotPassContainer: { textAlign: "right", marginTop: "12px" },
-  forgotPassLink: { color: "#1e3c72", fontSize: "14px", fontWeight: "600", textDecoration: "none" },
-  
-  loginBtn: { width: "100%", padding: "16px", background: "linear-gradient(90deg, #1e3c72 0%, #2a5298 100%)", color: "white", border: "none", borderRadius: "10px", fontSize: "16px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: "0 10px 20px rgba(30, 60, 114, 0.2)", transition: "transform 0.2s" },
-  footer: { marginTop: "30px", textAlign: "center", fontSize: "14px", color: "#666" },
-  link: { color: "#1e3c72", fontWeight: "700", textDecoration: "none" }
 };
 
 export default Login;

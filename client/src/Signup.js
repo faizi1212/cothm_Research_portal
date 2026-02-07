@@ -1,102 +1,159 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaLayerGroup, FaUniversity } from "react-icons/fa";
-import logo from "./logo.png"; // Ensure logo.png is in src folder
+import { FaUser, FaEnvelope, FaLock, FaIdCard, FaGraduationCap, FaUniversity, FaArrowLeft } from "react-icons/fa";
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", password: "", batchNumber: "" });
-  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    course: "Computer Science", // Default
+    batchNumber: ""
+  });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
   const navigate = useNavigate();
-
   const API_URL = "https://cothm-research-portal.onrender.com";
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
+
     try {
-      await axios.post(`${API_URL}/api/auth/register`, { ...formData, role: "student" });
-      alert("✅ Registration Successful! Please Login.");
+      await axios.post(`${API_URL}/api/auth/register`, formData);
+      alert("✅ Account Created Successfully! Please Login.");
       navigate("/login");
     } catch (err) {
-      alert("❌ " + (err.response?.data?.message || "Signup Failed"));
+      setError(err.response?.data?.message || "Registration failed. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <div style={styles.logoCircle}>
-             <FaUniversity size={30} color="white" />
-          </div>
-          <h2 style={styles.title}>Student Registration</h2>
-          <p style={styles.subtitle}>Join the COTHM Research Portal</p>
+    <div className="auth-container">
+      {/* Reusing Styles from Login for Consistency */}
+      <style>{`
+        :root {
+          --primary: #1e3c72;
+          --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #f3f4f6; }
+        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-gradient); padding: 20px; }
+        
+        .auth-card {
+          background: rgba(255, 255, 255, 0.98);
+          border-radius: 20px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          width: 100%; max-width: 500px;
+          overflow: hidden; position: relative;
+        }
+
+        .auth-header { background: white; padding: 30px 30px 20px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        .logo-icon {
+          width: 50px; height: 50px; background: var(--primary); color: white;
+          border-radius: 50%; display: flex; align-items: center; justify-content: center;
+          margin: 0 auto 15px; font-size: 24px;
+        }
+        .brand-title { font-size: 22px; font-weight: 800; color: var(--primary); margin: 0; }
+        .brand-subtitle { color: #64748b; font-size: 13px; margin-top: 5px; }
+
+        .auth-form { padding: 30px; }
+        .form-row { display: flex; gap: 15px; }
+        .input-group { position: relative; margin-bottom: 15px; flex: 1; }
+        .input-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+        
+        .form-input {
+          width: 100%; padding: 12px 12px 12px 40px;
+          border: 2px solid #e2e8f0; border-radius: 10px;
+          font-size: 14px; outline: none; transition: all 0.3s;
+          box-sizing: border-box; color: #334155;
+        }
+        .form-input:focus { border-color: var(--primary); }
+        
+        .btn-primary {
+          width: 100%; padding: 14px; background: var(--primary);
+          color: white; border: none; border-radius: 10px;
+          font-weight: 700; font-size: 15px; cursor: pointer;
+          transition: all 0.2s; margin-top: 10px;
+        }
+        .btn-primary:hover { background: #102a56; transform: translateY(-2px); }
+        
+        .auth-footer { text-align: center; margin-top: 20px; font-size: 14px; color: #64748b; }
+        .login-link { color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 5px; }
+        .error-box { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: center; }
+        
+        /* Select Styling */
+        select.form-input { appearance: none; background: white; cursor: pointer; }
+      `}</style>
+
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="logo-icon"><FaUniversity /></div>
+          <h1 className="brand-title">Create Account</h1>
+          <p className="brand-subtitle">Join the COTHM Research Portal</p>
         </div>
 
-        <form onSubmit={handleSignup} style={styles.form}>
-          <div style={styles.row}>
-            <div style={styles.inputWrapper}>
-              <FaUser style={styles.icon} />
-              <input type="text" name="firstName" placeholder="First Name" onChange={handleChange} required style={styles.input} />
+        <form className="auth-form" onSubmit={handleSignup}>
+          {error && <div className="error-box">{error}</div>}
+
+          <div className="form-row">
+            <div className="input-group">
+              <FaUser className="input-icon" />
+              <input type="text" name="firstName" className="form-input" placeholder="First Name" onChange={handleChange} required />
             </div>
-            <div style={styles.inputWrapper}>
-              <FaUser style={styles.icon} />
-              <input type="text" name="lastName" placeholder="Last Name" onChange={handleChange} required style={styles.input} />
+            <div className="input-group">
+              <FaUser className="input-icon" />
+              <input type="text" name="lastName" className="form-input" placeholder="Last Name" onChange={handleChange} required />
             </div>
           </div>
 
-          <div style={styles.inputWrapper}>
-            <FaEnvelope style={styles.icon} />
-            <input type="email" name="email" placeholder="Student Email Address" onChange={handleChange} required style={styles.input} />
+          <div className="input-group">
+            <FaEnvelope className="input-icon" />
+            <input type="email" name="email" className="form-input" placeholder="Email Address" onChange={handleChange} required />
           </div>
 
-          {/* ADDED BATCH NUMBER FIELD */}
-          <div style={styles.inputWrapper}>
-            <FaLayerGroup style={styles.icon} />
-            <input type="text" name="batchNumber" placeholder="Batch Number (e.g. Batch-22)" onChange={handleChange} required style={styles.input} />
+          <div className="form-row">
+            <div className="input-group">
+              <FaGraduationCap className="input-icon" />
+              <select name="course" className="form-input" onChange={handleChange}>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Software Engineering">Software Engineering</option>
+                <option value="Hospitality Management">Hospitality Management</option>
+              </select>
+            </div>
+            <div className="input-group">
+              <FaIdCard className="input-icon" />
+              <input type="text" name="batchNumber" className="form-input" placeholder="Batch No (e.g. 24)" onChange={handleChange} required />
+            </div>
           </div>
 
-          <div style={styles.inputWrapper}>
-            <FaLock style={styles.icon} />
-            <input type={showPassword ? "text" : "password"} name="password" placeholder="Create Password" onChange={handleChange} required style={styles.input} />
-            <span onClick={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>{showPassword ? <FaEyeSlash /> : <FaEye />}</span>
+          <div className="input-group">
+            <FaLock className="input-icon" />
+            <input type="password" name="password" className="form-input" placeholder="Create Password" onChange={handleChange} required />
           </div>
 
-          <button type="submit" disabled={loading} style={styles.btn}>
-            {loading ? "Creating Account..." : <>Create Account <FaArrowRight /></>}
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? "Creating Account..." : "Sign Up"}
           </button>
-        </form>
 
-        <p style={styles.footer}>
-          Already registered? <Link to="/login" style={styles.link}>Sign In</Link>
-        </p>
+          <div className="auth-footer">
+            Already have an account? 
+            <Link to="/login" className="login-link">Login Here</Link>
+          </div>
+        </form>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: { minHeight: "100vh", background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Poppins', sans-serif", padding: "20px" },
-  card: { background: "rgba(255, 255, 255, 0.95)", backdropFilter: "blur(10px)", padding: "40px", borderRadius: "24px", boxShadow: "0 25px 50px rgba(0,0,0,0.2)", width: "100%", maxWidth: "500px" },
-  header: { textAlign: "center", marginBottom: "30px" },
-  logoCircle: { width: "60px", height: "60px", background: "#1e3c72", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 15px", boxShadow: "0 10px 20px rgba(30, 60, 114, 0.3)" },
-  title: { fontSize: "26px", fontWeight: "700", color: "#333", margin: "0" },
-  subtitle: { color: "#666", fontSize: "14px", marginTop: "5px" },
-  form: { display: "flex", flexDirection: "column", gap: "15px" },
-  row: { display: "flex", gap: "15px" },
-  inputWrapper: { position: "relative", flex: 1 },
-  icon: { position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: "#1e3c72" },
-  input: { width: "100%", padding: "14px 14px 14px 45px", borderRadius: "12px", border: "2px solid #e1e5ee", background: "#f8f9fc", fontSize: "14px", outline: "none", transition: "all 0.3s", boxSizing: "border-box" },
-  eyeBtn: { position: "absolute", right: "15px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#888" },
-  btn: { width: "100%", padding: "16px", background: "linear-gradient(90deg, #1e3c72, #2a5298)", color: "white", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "600", cursor: "pointer", marginTop: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: "0 10px 20px rgba(30, 60, 114, 0.2)" },
-  footer: { textAlign: "center", marginTop: "25px", fontSize: "14px", color: "#666" },
-  link: { color: "#1e3c72", fontWeight: "700", textDecoration: "none" }
 };
 
 export default Signup;

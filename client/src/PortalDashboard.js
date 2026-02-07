@@ -61,7 +61,7 @@ const PortalDashboard = () => {
       formData.append("studentEmail", user.email);
       formData.append("studentName", `${user.firstName} ${user.lastName}`);
       formData.append("stage", uploadStage);
-      formData.append("batchNumber", user.batchNumber); // Send Batch Number
+      formData.append("batchNumber", user.batchNumber);
       
       await axios.post(`${API_URL}/api/submit`, formData);
       
@@ -106,21 +106,42 @@ const PortalDashboard = () => {
         }
         
         body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
-        .portal-layout { display: flex; min-height: 100vh; position: relative; }
+        .portal-layout { display: flex; min-height: 100vh; position: relative; overflow-x: hidden; }
         
-        /* SIDEBAR */
+        /* --- SIDEBAR FIXED --- */
         .sidebar {
           background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-          color: white; width: 260px; transition: transform 0.3s ease, width 0.3s ease;
-          display: flex; flexDirection: column; position: fixed; height: 100vh; z-index: 50;
+          color: white; width: 260px; transition: all 0.3s ease;
+          display: flex; flexDirection: column; justify-content: space-between; /* Pushes Footer to bottom */
+          position: fixed; height: 100vh; z-index: 50; top: 0; left: 0;
         }
         .sidebar.closed { transform: translateX(-100%); width: 0; }
-        .sidebar-header { padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; }
-        .sidebar-title { font-weight: 700; font-size: 20px; margin: 0; }
-        .nav-links { padding: 20px; flex: 1; }
-        .nav-item { padding: 14px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; color: rgba(255,255,255,0.8); font-weight: 500; display: flex; align-items: center; gap: 12px; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
         
+        .sidebar-top { padding: 20px; }
+        .sidebar-header { 
+          display: flex; align-items: center; gap: 12px; 
+          padding-bottom: 20px; margin-bottom: 20px; 
+          border-bottom: 1px solid rgba(255,255,255,0.1); 
+        }
+        .sidebar-title { font-weight: 700; font-size: 20px; margin: 0; letter-spacing: 0.5px; }
+        
+        .nav-item { 
+          padding: 12px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s; 
+          margin-bottom: 8px; color: rgba(255,255,255,0.8); font-weight: 500; 
+          display: flex; align-items: center; gap: 12px; 
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; transform: translateX(5px); }
+        
+        /* Logout at bottom */
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .logout-btn {
+          width: 100%; padding: 12px; background: rgba(239, 68, 68, 0.2); 
+          color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; 
+          cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; 
+          font-weight: 600; transition: all 0.2s;
+        }
+        .logout-btn:hover { background: rgba(239, 68, 68, 0.3); color: white; }
+
         /* MAIN */
         .main-wrapper { flex: 1; margin-left: 260px; transition: margin 0.3s ease; width: 100%; }
         .main-wrapper.full { margin-left: 0; }
@@ -142,9 +163,9 @@ const PortalDashboard = () => {
         .card { background: var(--surface); border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .card-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         
-        /* UPLOAD ZONE - FIXED GLITCH */
+        /* UPLOAD ZONE */
         .upload-container { position: relative; width: 100%; margin-top: 15px; }
-        .hidden-input { display: none !important; } /* Force hide */
+        .hidden-input { display: none !important; }
         .upload-label {
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px;
@@ -173,26 +194,33 @@ const PortalDashboard = () => {
         @media (max-width: 768px) { .main-wrapper { margin-left: 0; } .sidebar { position: fixed; } }
       `}</style>
 
-      {/* SIDEBAR */}
+      {/* --- SIDEBAR FIXED LAYOUT --- */}
       <div className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
-        <div className="sidebar-header">
-          <FaUserGraduate size={24} />
-          <h1 className="sidebar-title">COTHM Portal</h1>
-        </div>
-        <div className="nav-links">
+        
+        {/* TOP SECTION: Logo + Menu */}
+        <div className="sidebar-top">
+          <div className="sidebar-header">
+            <FaUserGraduate size={28} />
+            <h1 className="sidebar-title">COTHM</h1>
+          </div>
+          
           <div className="nav-item active">
             <FaUserGraduate /> Dashboard
           </div>
-          <div className="nav-item" onClick={handleLogout}>
+        </div>
+
+        {/* BOTTOM SECTION: Logout */}
+        <div className="sidebar-footer">
+          <button className="logout-btn" onClick={handleLogout}>
             <FaSignOutAlt /> Logout
-          </div>
+          </button>
         </div>
       </div>
 
       {/* MAIN CONTENT */}
       <div className={`main-wrapper ${isSidebarOpen ? '' : 'full'}`}>
         
-        {/* NAVBAR WITH BATCH NUMBER */}
+        {/* NAVBAR */}
         <div className="navbar">
           <div className="menu-btn" onClick={() => setSidebarOpen(!isSidebarOpen)}>
             {isSidebarOpen ? <FaTimes size={20}/> : <FaBars size={20}/>}
@@ -200,7 +228,6 @@ const PortalDashboard = () => {
           <div className="user-profile">
             <div className="user-info">
               <span className="user-name">{user.firstName} {user.lastName}</span>
-              {/* ✅ ADDED BATCH NUMBER HERE */}
               <span className="user-batch">Batch: {user.batchNumber || "N/A"}</span>
             </div>
             <div className="user-avatar">{user.firstName?.charAt(0)}</div>
@@ -239,7 +266,7 @@ const PortalDashboard = () => {
               )}
             </div>
 
-            {/* 2. UPLOAD CARD (Fixed Glitch) */}
+            {/* 2. UPLOAD CARD */}
             <div className="card">
               <div className="card-title"><FaCloudUploadAlt color="#1e3c72"/> New Submission</div>
               
@@ -259,12 +286,12 @@ const PortalDashboard = () => {
                   </select>
                 </div>
 
-                {/* ✅ FIXED UPLOAD BOX GLITCH */}
+                {/* UPLOAD BOX */}
                 <div className="upload-container">
                   <input 
                     type="file" 
                     id="file-upload" 
-                    className="hidden-input" // This class enforces display: none
+                    className="hidden-input" 
                     onChange={handleFileChange} 
                     accept=".pdf,.doc,.docx" 
                   />

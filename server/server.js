@@ -1,3 +1,4 @@
+console.log("🚀 STARTING NEW SERVER WITH BREVO EMAIL...");
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');

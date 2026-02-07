@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 const PortalDashboard = () => {
   // --- STATE ---
-  const [activeTab, setActiveTab] = useState("Dashboard"); // 'Dashboard' or 'Resources'
+  const [activeTab, setActiveTab] = useState("Dashboard");
   const [data, setData] = useState({ 
     project: null, 
     announcements: [], 
@@ -18,7 +18,6 @@ const PortalDashboard = () => {
     deadline: null 
   });
   const [daysLeft, setDaysLeft] = useState(null);
-  
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [uploadStage, setUploadStage] = useState("");
@@ -42,7 +41,6 @@ const PortalDashboard = () => {
 
   const fetchAllData = async () => {
     try {
-      // Fetch everything in parallel
       const [pRes, aRes, rRes, sRes] = await Promise.all([
         axios.get(`${API_URL}/api/projects/my-projects?email=${user.email}`),
         axios.get(`${API_URL}/api/announcements`),
@@ -50,7 +48,6 @@ const PortalDashboard = () => {
         axios.get(`${API_URL}/api/settings`)
       ]);
 
-      // Calculate Deadline
       let deadlineDate = sRes.data.deadline ? new Date(sRes.data.deadline) : null;
       if (deadlineDate) {
         const diff = Math.ceil((deadlineDate - new Date()) / (1000 * 60 * 60 * 24));
@@ -95,7 +92,7 @@ const PortalDashboard = () => {
       showToast("Submission Uploaded Successfully!");
       setFile(null); 
       setUploadStage(""); 
-      fetchAllData(); // Refresh project data
+      fetchAllData();
     } catch (err) { 
       showToast("Upload Failed. Please try again.", "error");
     } finally { 
@@ -135,26 +132,81 @@ const PortalDashboard = () => {
         body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
         .portal-layout { display: flex; min-height: 100vh; position: relative; overflow-x: hidden; }
         
-        /* SIDEBAR FIXED LAYOUT */
+        /* --- SIDEBAR FIXED LAYOUT (FLAT FLEX) --- */
         .sidebar {
           background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-          color: white; width: 260px; height: 100vh; position: fixed; top: 0; left: 0; z-index: 50;
-          transition: transform 0.3s ease; display: flex; flexDirection: column;
+          color: white; 
+          width: 260px; 
+          height: 100vh; 
+          position: fixed; 
+          top: 0; 
+          left: 0; 
+          z-index: 50;
+          transition: transform 0.3s ease; 
+          
+          /* CRITICAL LAYOUT RULES */
+          display: flex; 
+          flex-direction: column; 
         }
         .sidebar.closed { transform: translateX(-100%); }
         
-        .sidebar-header { padding: 25px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        /* 1. HEADER (Fixed height) */
+        .sidebar-header { 
+          padding: 25px; 
+          display: flex; 
+          align-items: center; 
+          gap: 12px; 
+          border-bottom: 1px solid rgba(255,255,255,0.1); 
+          flex-shrink: 0; 
+        }
         .sidebar-title { font-weight: 700; font-size: 20px; margin: 0; letter-spacing: 0.5px; }
 
-        .nav-links { padding: 20px; flex-grow: 1; overflow-y: auto; }
-        .nav-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; color: rgba(255,255,255,0.8); font-weight: 500; display: flex; align-items: center; gap: 12px; }
+        /* 2. NAV LINKS (Fills remaining space) */
+        .nav-links { 
+          padding: 20px; 
+          flex-grow: 1; /* EXPANDS TO PUSH FOOTER DOWN */
+          overflow-y: auto; 
+        }
+        .nav-item { 
+          padding: 12px 16px; 
+          border-radius: 10px; 
+          cursor: pointer; 
+          transition: all 0.2s; 
+          margin-bottom: 8px; 
+          color: rgba(255,255,255,0.8); 
+          font-weight: 500; 
+          display: flex; 
+          align-items: center; 
+          gap: 12px; 
+        }
         .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; transform: translateX(5px); }
 
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; background: rgba(0,0,0,0.1); }
-        .logout-btn { width: 100%; padding: 12px; background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; transition: all 0.2s; }
+        /* 3. FOOTER (Pinned to bottom) */
+        .sidebar-footer { 
+          padding: 20px; 
+          border-top: 1px solid rgba(255,255,255,0.1); 
+          flex-shrink: 0; 
+          background: rgba(0,0,0,0.1); 
+          margin-top: auto; /* SAFETY: Forces bottom alignment */
+        }
+        .logout-btn { 
+          width: 100%; 
+          padding: 12px; 
+          background: rgba(239, 68, 68, 0.15); 
+          color: #fca5a5; 
+          border: 1px solid rgba(239, 68, 68, 0.2); 
+          border-radius: 8px; 
+          cursor: pointer; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          gap: 8px; 
+          font-weight: 600; 
+          transition: all 0.2s; 
+        }
         .logout-btn:hover { background: rgba(239, 68, 68, 0.3); color: white; border-color: rgba(239, 68, 68, 0.5); }
 
-        /* MAIN */
+        /* MAIN CONTENT */
         .main-wrapper { flex: 1; margin-left: 260px; transition: margin 0.3s ease; width: 100%; }
         .main-wrapper.full { margin-left: 0; }
         
@@ -171,17 +223,15 @@ const PortalDashboard = () => {
         .content { padding: 30px; max-width: 1200px; margin: 0 auto; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
         
-        /* CARDS */
+        /* CARDS & UI COMPONENTS */
         .card { background: var(--surface); border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 25px; }
         .card-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         
-        /* FEATURES */
         .deadline-box { background: #fff7ed; color: #c2410c; padding: 15px 20px; border-radius: 12px; font-weight: 600; text-align: center; margin-bottom: 25px; border: 1px solid #ffedd5; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .announcement-item { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
         .resource-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border); transition: 0.2s; }
         .resource-item:hover { background: white; border-color: var(--primary); }
 
-        /* UPLOAD */
         .upload-container { position: relative; width: 100%; margin-top: 15px; }
         .hidden-input { display: none !important; }
         .upload-label { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; background: #f8fafc; cursor: pointer; transition: all 0.2s; width: 100%; box-sizing: border-box; }
@@ -190,47 +240,44 @@ const PortalDashboard = () => {
         .btn-submit { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; margin-top: 20px; cursor: pointer; }
         .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
         
-        /* STATUS HERO */
         .status-hero { padding: 25px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; text-align: center; }
         .status-value { font-size: 24px; font-weight: 800; margin-top: 5px; }
         .feedback-box { background: #f8fafc; border-left: 4px solid var(--primary); padding: 15px; border-radius: 8px; margin-top: 20px; }
-        
-        /* HISTORY */
         .history-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 10px; margin-bottom: 10px; }
         .btn-view { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; color: var(--text); text-decoration: none; font-size: 12px; font-weight: 600; }
         
-        /* TOAST */
         .toast { position: fixed; bottom: 20px; right: 20px; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; z-index: 100; border-left: 4px solid var(--success); }
         .toast.error { border-left-color: var(--danger); }
         
         @media (max-width: 768px) { .main-wrapper { margin-left: 0; } .sidebar { position: fixed; } }
       `}</style>
 
-      {/* SIDEBAR */}
+      {/* --- SIDEBAR (FLAT STRUCTURE) --- */}
       <div className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
-        <div style={{display:'flex', flexDirection:'column', flexGrow: 1}}>
-          <div className="sidebar-header">
-            <FaUserGraduate size={28} />
-            <h1 className="sidebar-title">COTHM</h1>
+        
+        {/* 1. HEADER */}
+        <div className="sidebar-header">
+          <FaUserGraduate size={28} />
+          <h1 className="sidebar-title">COTHM</h1>
+        </div>
+        
+        {/* 2. NAV LINKS (MIDDLE - Grows to fill space) */}
+        <div className="nav-links">
+          <div 
+            className={`nav-item ${activeTab === 'Dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('Dashboard')}
+          >
+            <FaUserGraduate /> Dashboard
           </div>
-          
-          <div className="nav-links">
-            {/* TABS */}
-            <div 
-              className={`nav-item ${activeTab === 'Dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Dashboard')}
-            >
-              <FaUserGraduate /> Dashboard
-            </div>
-            <div 
-              className={`nav-item ${activeTab === 'Resources' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Resources')}
-            >
-              <FaFolderOpen /> Resources
-            </div>
+          <div 
+            className={`nav-item ${activeTab === 'Resources' ? 'active' : ''}`}
+            onClick={() => setActiveTab('Resources')}
+          >
+            <FaFolderOpen /> Resources
           </div>
         </div>
 
+        {/* 3. FOOTER (BOTTOM - Pushed down) */}
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout}>
             <FaSignOutAlt /> Logout
@@ -238,10 +285,9 @@ const PortalDashboard = () => {
         </div>
       </div>
 
-      {/* MAIN CONTENT */}
+      {/* --- MAIN CONTENT --- */}
       <div className={`main-wrapper ${isSidebarOpen ? '' : 'full'}`}>
         
-        {/* NAVBAR */}
         <div className="navbar">
           <div className="menu-btn" onClick={() => setSidebarOpen(!isSidebarOpen)}>
             {isSidebarOpen ? <FaTimes size={20}/> : <FaBars size={20}/>}
@@ -263,7 +309,6 @@ const PortalDashboard = () => {
             </p>
           </div>
 
-          {/* DEADLINE BANNER */}
           {daysLeft !== null && daysLeft > 0 && (
             <div className="deadline-box">
               <FaCalendarCheck /> 
@@ -271,13 +316,11 @@ const PortalDashboard = () => {
             </div>
           )}
 
-          {/* --- DASHBOARD TAB --- */}
-          {activeTab === 'Dashboard' && (
+          {activeTab === 'Dashboard' ? (
             <div className="grid">
               
-              {/* LEFT COLUMN */}
               <div>
-                {/* 1. ANNOUNCEMENTS (NEW) */}
+                {/* ANNOUNCEMENTS */}
                 <div className="card">
                   <div className="card-title"><FaBullhorn color="#1e3c72"/> Announcements</div>
                   {data.announcements.length === 0 ? <p style={{color:'#94a3b8', fontSize:14}}>No updates yet.</p> : 
@@ -291,7 +334,7 @@ const PortalDashboard = () => {
                   }
                 </div>
 
-                {/* 2. PROJECT STATUS */}
+                {/* PROJECT STATUS */}
                 <div className="card">
                   <div className="card-title"><FaClock color="#1e3c72"/> Project Status</div>
                   {data.project ? (
@@ -316,9 +359,8 @@ const PortalDashboard = () => {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN */}
               <div>
-                {/* 3. UPLOAD CARD */}
+                {/* UPLOAD CARD */}
                 <div className="card">
                   <div className="card-title"><FaCloudUploadAlt color="#1e3c72"/> New Submission</div>
                   
@@ -355,7 +397,7 @@ const PortalDashboard = () => {
                   </form>
                 </div>
 
-                {/* 4. HISTORY */}
+                {/* HISTORY */}
                 {data.project?.submissions?.length > 0 && (
                   <div className="card">
                     <div className="card-title"><FaHistory color="#1e3c72"/> History</div>
@@ -375,10 +417,7 @@ const PortalDashboard = () => {
                 )}
               </div>
             </div>
-          )}
-
-          {/* --- RESOURCES TAB --- */}
-          {activeTab === 'Resources' && (
+          ) : (
             <div className="grid">
               <div className="card" style={{gridColumn: '1 / -1'}}>
                 <div className="card-title"><FaFolderOpen color="#1e3c72"/> Document Library</div>
@@ -403,7 +442,6 @@ const PortalDashboard = () => {
               </div>
             </div>
           )}
-
         </div>
       </div>
 

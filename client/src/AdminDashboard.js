@@ -1,279 +1,254 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaUserGraduate, FaCheck, FaTimes, FaFileAlt, FaComments, FaClock } from "react-icons/fa";
+import { FaUserGraduate, FaCheckCircle, FaTimesCircle, FaClock, FaFilePdf, FaPaperPlane, FaSearch, FaFilter, FaSignOutAlt, FaSync } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [actionType, setActionType] = useState(""); 
-  const [comment, setComment] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
   
+  // LOGIC: State for updates
+  const [processingId, setProcessingId] = useState(null);
+  const [feedbackInputs, setFeedbackInputs] = useState({});
+
+  const navigate = useNavigate();
   const API_URL = "https://cothm-research-portal.onrender.com";
 
   useEffect(() => { fetchProjects(); }, []);
 
+  // LOGIC: Fetch Data
   const fetchProjects = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/projects/all`);
       setProjects(res.data);
-    } catch (err) { 
-      console.error("Error fetching projects:", err); 
-    }
+    } catch (err) { console.error(err); } 
+    finally { setLoading(false); }
   };
 
-  const initiateAction = (project, type) => {
-    setSelectedProject(project);
-    setActionType(type);
-    setComment(""); 
-  };
-
-  const submitDecision = async () => {
-    if (!comment.trim()) {
-      alert("⚠️ Please provide a reason or feedback for this decision.");
-      return;
-    }
+  // LOGIC: Update Status & Feedback
+  const handleUpdate = async (project, status) => {
+    const feedback = feedbackInputs[project._id] || "";
+    if (status === "Rejected" && !feedback) return alert("Please provide a reason for rejection.");
     
-    setLoading(true);
-
+    setProcessingId(project._id);
     try {
-      await axios.post(`${API_URL}/api/admin/update`, { 
-        email: selectedProject.studentEmail, 
-        status: actionType,
-        comment: comment
+      await axios.post(`${API_URL}/api/admin/update`, {
+        email: project.studentEmail,
+        status: status,
+        comment: feedback
       });
+      alert(`Project ${status} Successfully!`);
+      fetchProjects();
+      setFeedbackInputs({ ...feedbackInputs, [project._id]: "" });
+    } catch (err) { alert("Update failed"); }
+    finally { setProcessingId(null); }
+  };
 
-      alert(`✅ Project ${actionType} successfully! Student will be notified.`);
-      setSelectedProject(null); 
-      setComment("");
-      fetchProjects(); 
-    } catch (err) {
-      console.error("Decision Error:", err);
-      alert("❌ Failed: " + (err.response?.data?.error || err.message));
-    } finally {
-      setLoading(false);
-    }
+  const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
+
+  // LOGIC: Filtering
+  const filteredProjects = projects.filter(p => 
+    (filterStatus === "All" || p.status === filterStatus) &&
+    (p.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || p.studentEmail.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const getStatusColor = (status) => {
+    if (status === 'Approved') return { bg: '#dcfce7', text: '#166534', icon: <FaCheckCircle /> };
+    if (status === 'Rejected') return { bg: '#fee2e2', text: '#991b1b', icon: <FaTimesCircle /> };
+    return { bg: '#fef3c7', text: '#92400e', icon: <FaClock /> };
   };
 
   return (
-    <div className="container dashboard-container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="text-white fw-bold">🎓 Supervisor Dashboard</h2>
-        <button onClick={fetchProjects} className="btn btn-outline-light btn-sm">
-          🔄 Refresh
-        </button>
-      </div>
-      
-      <div className="card-dashboard">
-        <div className="table-responsive">
-          <table className="table table-hover mb-0 align-middle">
-            <thead className="bg-light">
-              <tr>
-                <th className="p-3">Student Information</th>
-                <th>Status</th>
-                <th>Supervisor Feedback</th>
-                <th>Submitted File</th>
-                <th className="text-center">Review Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projects.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="text-center text-muted p-5">
-                    📭 No project submissions yet
-                  </td>
-                </tr>
-              ) : (
-                projects.map((proj, i) => (
-                  <tr key={i}>
-                    <td className="p-3">
-                      <div className="d-flex align-items-center">
-                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
-                             style={{width: '45px', height: '45px'}}>
-                          <FaUserGraduate size={20}/>
-                        </div>
-                        <div>
-                          <div className="fw-bold text-navy">{proj.studentName}</div>
-                          <small className="text-muted d-block">{proj.studentEmail}</small>
-                          <small className="text-muted">
-                            {proj.course} | Batch: {proj.batchNumber}
-                          </small>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`badge rounded-pill px-3 py-2 ${
-                        proj.status === 'Approved' ? 'bg-success' : 
-                        proj.status === 'Rejected' ? 'bg-danger' : 
-                        'bg-warning text-dark'
-                      }`}>
-                        {proj.status === 'Pending Review' && <FaClock className="me-1"/>}
-                        {proj.status === 'Approved' && <FaCheck className="me-1"/>}
-                        {proj.status === 'Rejected' && <FaTimes className="me-1"/>}
-                        {proj.status}
-                      </span>
-                    </td>
-                    <td style={{maxWidth: '300px'}}>
-                      {proj.feedback ? (
-                        <div className="small bg-light p-2 rounded">
-                          <FaComments className="text-primary me-1"/>
-                          <strong>Your Feedback:</strong><br/>
-                          <span className="text-muted">
-                            {proj.feedback.length > 80 
-                              ? proj.feedback.substring(0, 80) + "..." 
-                              : proj.feedback}
-                          </span>
-                        </div>
-                      ) : (
-                        <small className="text-muted fst-italic">No feedback provided yet</small>
-                      )}
-                    </td>
-                    <td>
-                      {proj.submissions && proj.submissions.length > 0 ? (
-                        <div>
-                          <a href={proj.submissions[proj.submissions.length-1].fileUrl} 
-                             target="_blank" 
-                             rel="noreferrer" 
-                             className="btn btn-sm btn-outline-primary">
-                            <FaFileAlt className="me-1"/> View Submission
-                          </a>
-                          <div className="small text-muted mt-1">
-                            {new Date(proj.submissions[proj.submissions.length-1].date).toLocaleDateString()}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-muted small">No file submitted</span>
-                      )}
-                    </td>
-                    <td className="text-center">
-                      {proj.status === 'Pending Review' ? (
-                        <div className="btn-group-vertical btn-group-sm gap-2">
-                          <button 
-                            onClick={() => initiateAction(proj, 'Approved')} 
-                            className="btn btn-success"
-                          >
-                            <FaCheck className="me-1"/> Approve
-                          </button>
-                          <button 
-                            onClick={() => initiateAction(proj, 'Rejected')} 
-                            className="btn btn-danger"
-                          >
-                            <FaTimes className="me-1"/> Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => initiateAction(proj, proj.status === 'Approved' ? 'Rejected' : 'Approved')} 
-                          className="btn btn-sm btn-outline-secondary"
-                        >
-                          Change Decision
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* REVIEW MODAL */}
-      {selectedProject && (
-        <div 
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
-          style={{background: "rgba(0,0,0,0.75)", zIndex: 1050}}
-          onClick={() => !loading && setSelectedProject(null)}
-        >
-          <div 
-            className="bg-white p-4 rounded-4 shadow-lg" 
-            style={{maxWidth: "600px", width: "90%"}}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h4 className={`mb-3 fw-bold ${actionType === 'Approved' ? 'text-success' : 'text-danger'}`}>
-              {actionType === 'Approved' ? (
-                <>
-                  <FaCheck className="me-2"/> Approve Project
-                </>
-              ) : (
-                <>
-                  <FaTimes className="me-2"/> Reject Project
-                </>
-              )}
-            </h4>
-            
-            <div className="alert alert-info mb-3">
-              <strong>Student:</strong> {selectedProject.studentName}<br/>
-              <strong>Email:</strong> {selectedProject.studentEmail}<br/>
-              <strong>Course:</strong> {selectedProject.course} | <strong>Batch:</strong> {selectedProject.batchNumber}
-            </div>
-
-            {selectedProject.feedback && (
-              <div className="alert alert-warning mb-3">
-                <strong>Previous Feedback:</strong><br/>
-                <small>{selectedProject.feedback}</small>
-              </div>
-            )}
-            
-            <label className="form-label fw-bold">
-              {actionType === 'Approved' ? (
-                <>
-                  <FaCheck className="text-success me-2"/>
-                  Approval Comments & Suggestions:
-                </>
-              ) : (
-                <>
-                  <FaTimes className="text-danger me-2"/>
-                  Rejection Reason & Required Changes:
-                </>
-              )}
-            </label>
-            <textarea 
-              className="form-control mb-3" 
-              rows="6" 
-              placeholder={actionType === 'Approved' 
-                ? "Provide positive feedback and any suggestions for future improvements..." 
-                : "Clearly explain what needs to be improved or corrected. Be specific so the student knows what to fix..."}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              disabled={loading}
-              autoFocus
-            ></textarea>
-
-            <div className="alert alert-light small mb-3">
-              <strong>Note:</strong> The student will see this feedback on their dashboard along with the status update.
-            </div>
-
-            <div className="d-flex justify-content-end gap-2">
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setSelectedProject(null)} 
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button 
-                className={`btn ${actionType === 'Approved' ? 'btn-success' : 'btn-danger'}`} 
-                onClick={submitDecision} 
-                disabled={loading || !comment.trim()}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    Confirm {actionType}
-                  </>
-                )}
-              </button>
-            </div>
+    <div style={styles.dashboardContainer}>
+      {/* Top Navbar */}
+      <nav style={styles.navbar}>
+        <div style={styles.navBrand}>
+          <div style={styles.logoIcon}><FaUserGraduate color="white" size={24} /></div>
+          <div>
+            <h2 style={styles.navTitle}>Supervisor Dashboard</h2>
+            <span style={styles.navSubtitle}>COTHM International</span>
           </div>
         </div>
-      )}
+        <button onClick={handleLogout} style={styles.logoutBtn}>
+          <FaSignOutAlt /> Logout
+        </button>
+      </nav>
+
+      <div style={styles.mainContent}>
+        {/* Stats & Filters Bar */}
+        <div style={styles.actionBar}>
+          <div style={styles.searchWrapper}>
+            <FaSearch style={styles.searchIcon} />
+            <input 
+              type="text" 
+              placeholder="Search student..." 
+              style={styles.searchInput}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div style={styles.filterWrapper}>
+            <FaFilter style={styles.filterIcon} />
+            <select style={styles.filterSelect} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="All">All Status</option>
+              <option value="Pending Review">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          <button onClick={fetchProjects} style={styles.refreshBtn}>
+            <FaSync className={loading ? "spin" : ""} /> Refresh
+          </button>
+        </div>
+
+        {/* Stats Row */}
+        <div style={styles.statsRow}>
+          <div style={styles.statCard}>
+            <h3>{projects.length}</h3>
+            <p>Total Submissions</p>
+          </div>
+          <div style={{...styles.statCard, borderTop: '4px solid #f59e0b'}}>
+            <h3>{projects.filter(p => p.status === 'Pending Review').length}</h3>
+            <p>Pending Review</p>
+          </div>
+          <div style={{...styles.statCard, borderTop: '4px solid #10b981'}}>
+            <h3>{projects.filter(p => p.status === 'Approved').length}</h3>
+            <p>Approved</p>
+          </div>
+        </div>
+
+        {/* GRID LAYOUT (Replaces Table) */}
+        <div style={styles.gridContainer}>
+          {filteredProjects.map((project) => {
+            const statusStyle = getStatusColor(project.status);
+            const latestSub = project.submissions?.[project.submissions.length - 1];
+
+            return (
+              <div key={project._id} style={styles.projectCard}>
+                {/* Header of Card */}
+                <div style={styles.cardHeader}>
+                  <div style={styles.userInfo}>
+                    <div style={styles.avatar}>{project.studentName.charAt(0)}</div>
+                    <div>
+                      <h4 style={styles.studentName}>{project.studentName}</h4>
+                      <p style={styles.studentEmail}>{project.studentEmail}</p>
+                      <p style={styles.batchInfo}>{project.batchNumber || "No Batch"}</p>
+                    </div>
+                  </div>
+                  <div style={{...styles.statusBadge, background: statusStyle.bg, color: statusStyle.text}}>
+                    {statusStyle.icon} {project.status}
+                  </div>
+                </div>
+
+                {/* Body of Card */}
+                <div style={styles.cardBody}>
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Latest Submission:</span>
+                    <span style={styles.infoValue}>{latestSub?.stage || "N/A"}</span>
+                  </div>
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Date:</span>
+                    <span style={styles.infoValue}>{latestSub ? new Date(latestSub.date).toLocaleDateString() : "N/A"}</span>
+                  </div>
+                  
+                  {/* File Download Button */}
+                  {latestSub && (
+                    <a href={latestSub.fileUrl} target="_blank" rel="noreferrer" style={styles.fileBtn}>
+                      <FaFilePdf /> View Document
+                    </a>
+                  )}
+
+                  {/* Feedback Section */}
+                  <div style={styles.actionSection}>
+                    <textarea
+                      placeholder="Enter supervisor comments here..."
+                      style={styles.feedbackInput}
+                      value={feedbackInputs[project._id] !== undefined ? feedbackInputs[project._id] : (project.feedback || "")}
+                      onChange={(e) => setFeedbackInputs({ ...feedbackInputs, [project._id]: e.target.value })}
+                    />
+                    
+                    <div style={styles.btnGroup}>
+                      <button 
+                        onClick={() => handleUpdate(project, "Approved")}
+                        disabled={processingId === project._id}
+                        style={styles.approveBtn}
+                      >
+                        <FaCheckCircle /> Approve
+                      </button>
+                      <button 
+                        onClick={() => handleUpdate(project, "Rejected")}
+                        disabled={processingId === project._id}
+                        style={styles.rejectBtn}
+                      >
+                        <FaTimesCircle /> Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
+};
+
+// --- STYLES ---
+const styles = {
+  dashboardContainer: { minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Inter', sans-serif" },
+  navbar: { background: "#1e3c72", padding: "15px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", color: "white" },
+  navBrand: { display: "flex", alignItems: "center", gap: "15px" },
+  logoIcon: { width: "40px", height: "40px", background: "rgba(255,255,255,0.2)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" },
+  navTitle: { margin: 0, fontSize: "20px", fontWeight: "700" },
+  navSubtitle: { margin: 0, fontSize: "12px", opacity: 0.8 },
+  logoutBtn: { background: "rgba(255,255,255,0.15)", border: "none", color: "white", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontWeight: "600", transition: "all 0.2s" },
+  
+  mainContent: { maxWidth: "1200px", margin: "0 auto", padding: "30px 20px" },
+  
+  // Stats
+  statsRow: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "30px" },
+  statCard: { background: "white", padding: "20px", borderRadius: "12px", boxShadow: "0 2px 5px rgba(0,0,0,0.05)", textAlign: "center", borderTop: "4px solid #1e3c72" },
+  
+  // Actions
+  actionBar: { display: "flex", gap: "15px", marginBottom: "30px", flexWrap: "wrap" },
+  searchWrapper: { flex: 1, position: "relative", minWidth: "250px" },
+  searchIcon: { position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: "#64748b" },
+  searchInput: { width: "100%", padding: "12px 12px 12px 40px", borderRadius: "8px", border: "1px solid #e2e8f0", outline: "none", fontSize: "14px" },
+  filterWrapper: { position: "relative" },
+  filterSelect: { padding: "12px 35px 12px 15px", borderRadius: "8px", border: "1px solid #e2e8f0", outline: "none", background: "white", cursor: "pointer" },
+  refreshBtn: { background: "white", border: "1px solid #e2e8f0", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", color: "#475569", fontWeight: "600" },
+
+  // Grid
+  gridContainer: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "25px" },
+  
+  // Card
+  projectCard: { background: "white", borderRadius: "16px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)", overflow: "hidden", transition: "transform 0.2s" },
+  cardHeader: { padding: "20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
+  userInfo: { display: "flex", gap: "12px", alignItems: "center" },
+  avatar: { width: "40px", height: "40px", background: "#e0f2fe", color: "#0369a1", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "18px" },
+  studentName: { margin: 0, fontSize: "16px", fontWeight: "700", color: "#1e293b" },
+  studentEmail: { margin: 0, fontSize: "12px", color: "#64748b" },
+  batchInfo: { fontSize: "11px", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", color: "#475569", marginTop: "4px", display: "inline-block" },
+  statusBadge: { padding: "6px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" },
+  
+  cardBody: { padding: "20px" },
+  infoRow: { display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px" },
+  infoLabel: { color: "#64748b" },
+  infoValue: { fontWeight: "600", color: "#334155" },
+  
+  fileBtn: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "10px", marginTop: "15px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", textDecoration: "none", color: "#1e293b", fontWeight: "600", fontSize: "13px", transition: "background 0.2s" },
+  
+  actionSection: { marginTop: "20px", borderTop: "1px solid #f1f5f9", paddingTop: "15px" },
+  feedbackInput: { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px", minHeight: "60px", marginBottom: "15px", resize: "vertical", fontFamily: "inherit" },
+  btnGroup: { display: "flex", gap: "10px" },
+  approveBtn: { flex: 1, padding: "10px", background: "#16a34a", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontWeight: "600", fontSize: "13px" },
+  rejectBtn: { flex: 1, padding: "10px", background: "#dc2626", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontWeight: "600", fontSize: "13px" }
 };
 
 export default AdminDashboard;

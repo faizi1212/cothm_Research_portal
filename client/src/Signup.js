@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUser, FaEnvelope, FaLock, FaIdCard, FaGraduationCap, FaUniversity, FaArrowLeft } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaIdCard, FaGraduationCap } from "react-icons/fa";
+import logo from "./logo.png"; // ✅ COTHM Logo
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +10,7 @@ const Signup = () => {
     lastName: "",
     email: "",
     password: "",
-    course: "Computer Science", // Default
+    course: "Computer Science",
     batchNumber: ""
   });
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,7 @@ const Signup = () => {
       alert("✅ Account Created Successfully! Please Login.");
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Try again.");
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -40,66 +41,59 @@ const Signup = () => {
 
   return (
     <div className="auth-container">
-      {/* Reusing Styles from Login for Consistency */}
+      {/* Reusing Styles for Consistency */}
       <style>{`
         :root {
           --primary: #1e3c72;
+          --gold: #d4af37;
           --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
         body { margin: 0; font-family: 'Inter', sans-serif; background: #f3f4f6; }
-        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-gradient); padding: 20px; }
+        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-gradient); padding: 20px; position: relative; }
         
         .auth-card {
-          background: rgba(255, 255, 255, 0.98);
-          border-radius: 20px;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-          width: 100%; max-width: 500px;
-          overflow: hidden; position: relative;
+          background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
+          border-radius: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          width: 100%; max-width: 500px; overflow: hidden; position: relative; z-index: 10;
         }
 
-        .auth-header { background: white; padding: 30px 30px 20px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        .logo-icon {
-          width: 50px; height: 50px; background: var(--primary); color: white;
-          border-radius: 50%; display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 15px; font-size: 24px;
-        }
-        .brand-title { font-size: 22px; font-weight: 800; color: var(--primary); margin: 0; }
+        .auth-header { background: white; padding: 30px 30px 20px; text-align: center; border-bottom: 1px solid #f0f2f5; }
+        .brand-logo { width: 90px; height: auto; margin-bottom: 10px; }
+        .brand-title { font-size: 20px; font-weight: 800; color: var(--primary); margin: 0; text-transform: uppercase; }
         .brand-subtitle { color: #64748b; font-size: 13px; margin-top: 5px; }
 
         .auth-form { padding: 30px; }
         .form-row { display: flex; gap: 15px; }
         .input-group { position: relative; margin-bottom: 15px; flex: 1; }
-        .input-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+        .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
         
         .form-input {
-          width: 100%; padding: 12px 12px 12px 40px;
-          border: 2px solid #e2e8f0; border-radius: 10px;
-          font-size: 14px; outline: none; transition: all 0.3s;
-          box-sizing: border-box; color: #334155;
+          width: 100%; padding: 12px 12px 12px 48px; border: 2px solid #e2e8f0; border-radius: 12px;
+          font-size: 14px; outline: none; transition: all 0.3s; box-sizing: border-box; color: #334155; background: #f8fafc;
         }
-        .form-input:focus { border-color: var(--primary); }
+        .form-input:focus { border-color: var(--gold); background: white; }
         
         .btn-primary {
-          width: 100%; padding: 14px; background: var(--primary);
-          color: white; border: none; border-radius: 10px;
-          font-weight: 700; font-size: 15px; cursor: pointer;
-          transition: all 0.2s; margin-top: 10px;
+          width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px;
+          font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; margin-top: 15px;
         }
         .btn-primary:hover { background: #102a56; transform: translateY(-2px); }
         
         .auth-footer { text-align: center; margin-top: 20px; font-size: 14px; color: #64748b; }
         .login-link { color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 5px; }
-        .error-box { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: center; }
+        .login-link:hover { color: var(--gold); text-decoration: underline; }
+        .error-box { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: center; }
         
-        /* Select Styling */
-        select.form-input { appearance: none; background: white; cursor: pointer; }
+        select.form-input { appearance: none; background: #f8fafc; cursor: pointer; }
+        
+        @media (max-width: 480px) { .form-row { flex-direction: column; gap: 0; } }
       `}</style>
 
       <div className="auth-card">
         <div className="auth-header">
-          <div className="logo-icon"><FaUniversity /></div>
-          <h1 className="brand-title">Create Account</h1>
-          <p className="brand-subtitle">Join the COTHM Research Portal</p>
+          <img src={logo} alt="COTHM Logo" className="brand-logo" />
+          <h1 className="brand-title">Student Registration</h1>
+          <p className="brand-subtitle">Create your account to start submitting research</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSignup}>
@@ -118,7 +112,7 @@ const Signup = () => {
 
           <div className="input-group">
             <FaEnvelope className="input-icon" />
-            <input type="email" name="email" className="form-input" placeholder="Email Address" onChange={handleChange} required />
+            <input type="email" name="email" className="form-input" placeholder="Student Email" onChange={handleChange} required />
           </div>
 
           <div className="form-row">
@@ -147,7 +141,7 @@ const Signup = () => {
           </button>
 
           <div className="auth-footer">
-            Already have an account? 
+            Already registered? 
             <Link to="/login" className="login-link">Login Here</Link>
           </div>
         </form>

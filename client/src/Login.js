@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUser, FaLock, FaUniversity, FaEnvelope, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaLock, FaEnvelope, FaEye, FaEyeSlash } from "react-icons/fa";
+import logo from "./logo.png"; // ✅ COTHM Logo Restored
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -14,13 +15,13 @@ const Login = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(null); // Clear error when typing
+    setError(null);
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     if(!formData.email || !formData.password) {
-      setError("Please fill in all fields");
+      setError("Please enter both email and password.");
       return;
     }
     
@@ -29,14 +30,13 @@ const Login = () => {
       const res = await axios.post(`${API_URL}/api/auth/login`, formData);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       
-      // Redirect based on role
       if (res.data.user.role === "supervisor" || res.data.user.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/dashboard");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+      setError(err.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -46,8 +46,9 @@ const Login = () => {
     <div className="auth-container">
       <style>{`
         :root {
-          --primary: #1e3c72;
-          --accent: #d4af37; /* COTHM Gold */
+          --primary: #1e3c72; /* COTHM Navy */
+          --primary-dark: #162c55;
+          --gold: #d4af37;    /* COTHM Gold */
           --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
 
@@ -60,56 +61,79 @@ const Login = () => {
           justify-content: center;
           background: var(--bg-gradient);
           padding: 20px;
+          position: relative;
+          overflow: hidden;
         }
 
-        /* CARD DESIGN */
+        /* Decorative Circles for Modern Feel */
+        .circle {
+          position: absolute;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(5px);
+          z-index: 0;
+        }
+        .c1 { width: 300px; height: 300px; top: -50px; left: -50px; }
+        .c2 { width: 200px; height: 200px; bottom: -50px; right: -50px; }
+
+        /* GLASS CARD */
         .auth-card {
           background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
-          border-radius: 20px;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          backdrop-filter: blur(20px);
+          border-radius: 24px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
           width: 100%;
-          max-width: 450px;
+          max-width: 420px;
           overflow: hidden;
           position: relative;
+          z-index: 10;
+          border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
-        /* HEADER */
+        /* HEADER SECTION */
         .auth-header {
-          background: #fff;
+          background: white;
           padding: 40px 30px 20px;
           text-align: center;
+          border-bottom: 1px solid #f0f2f5;
         }
-        .logo-icon {
-          width: 60px; height: 60px;
-          background: var(--primary);
-          color: white;
-          border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 15px;
-          font-size: 28px;
-          box-shadow: 0 10px 15px -3px rgba(30, 60, 114, 0.3);
+        
+        .brand-logo {
+          width: 100px; /* Perfect size for logo */
+          height: auto;
+          margin-bottom: 15px;
+          filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+          transition: transform 0.3s;
         }
+        .brand-logo:hover { transform: scale(1.05); }
+
         .brand-title {
-          font-size: 24px; font-weight: 800; color: var(--primary); margin: 0; letter-spacing: -0.5px;
+          font-size: 22px;
+          font-weight: 800;
+          color: var(--primary);
+          margin: 0;
+          letter-spacing: -0.5px;
+          text-transform: uppercase;
         }
         .brand-subtitle {
-          color: #64748b; font-size: 14px; margin-top: 5px;
+          color: #64748b;
+          font-size: 13px;
+          margin-top: 6px;
+          font-weight: 500;
         }
 
-        /* FORM */
+        /* FORM SECTION */
         .auth-form { padding: 30px; }
         
-        .input-group {
-          position: relative; margin-bottom: 20px;
-        }
+        .input-group { position: relative; margin-bottom: 20px; }
         .input-icon {
-          position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+          position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
           color: #94a3b8; font-size: 18px; transition: color 0.3s;
         }
+        
         .form-input {
           width: 100%;
-          padding: 14px 14px 14px 45px;
+          padding: 14px 14px 14px 48px;
           border: 2px solid #e2e8f0;
           border-radius: 12px;
           font-size: 15px;
@@ -117,17 +141,22 @@ const Login = () => {
           transition: all 0.3s;
           box-sizing: border-box;
           color: #334155;
+          background: #f8fafc;
         }
+        
+        /* COTHM Gold Focus Effect */
         .form-input:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1);
+          border-color: var(--gold);
+          background: white;
+          box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
         }
-        .form-input:focus + .input-icon { color: var(--primary); }
+        .form-input:focus + .input-icon { color: var(--gold); }
 
         .password-toggle {
-          position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
-          color: #94a3b8; cursor: pointer;
+          position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+          color: #94a3b8; cursor: pointer; padding: 5px;
         }
+        .password-toggle:hover { color: var(--primary); }
 
         /* BUTTONS */
         .btn-primary {
@@ -142,20 +171,22 @@ const Login = () => {
           cursor: pointer;
           transition: all 0.2s;
           margin-top: 10px;
+          box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);
         }
         .btn-primary:hover {
-          background: #102a56;
+          background: var(--primary-dark);
           transform: translateY(-2px);
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 6px 15px rgba(30, 60, 114, 0.3);
         }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
 
         .forgot-link {
           display: block; text-align: right;
           color: var(--primary); font-size: 13px; font-weight: 600;
-          text-decoration: none; margin-bottom: 20px;
+          text-decoration: none; margin-bottom: 24px; transition: color 0.2s;
         }
-        .forgot-link:hover { text-decoration: underline; }
+        .forgot-link:hover { color: var(--gold); text-decoration: underline; }
 
         /* FOOTER */
         .auth-footer {
@@ -165,45 +196,52 @@ const Login = () => {
         .signup-link {
           color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 5px;
         }
-        .signup-link:hover { text-decoration: underline; }
+        .signup-link:hover { color: var(--gold); text-decoration: underline; }
 
-        /* ERROR MSG */
+        /* ERROR MESSAGE */
         .error-box {
           background: #fee2e2; border-left: 4px solid #ef4444;
-          color: #991b1b; padding: 12px; border-radius: 8px;
-          font-size: 14px; margin-bottom: 20px;
+          color: #991b1b; padding: 12px 15px; border-radius: 8px;
+          font-size: 13px; margin-bottom: 20px; font-weight: 500;
+          display: flex; align-items: center;
         }
 
+        /* MOBILE OPTIMIZATION */
         @media (max-width: 480px) {
-          .auth-card { border-radius: 0; height: 100vh; max-width: 100%; }
+          .auth-card { border-radius: 0; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+          .circle { display: none; } /* Remove decorations on small screens for cleanliness */
         }
       `}</style>
 
+      {/* Background Decorations */}
+      <div className="circle c1"></div>
+      <div className="circle c2"></div>
+
       <div className="auth-card">
         <div className="auth-header">
-          <div className="logo-icon"><FaUniversity /></div>
-          <h1 className="brand-title">COTHM Portal</h1>
-          <p className="brand-subtitle">Login to access your research dashboard</p>
+          {/* ✅ COTHM LOGO HERE */}
+          <img src={logo} alt="COTHM Logo" className="brand-logo" />
+          <h1 className="brand-title">Research Portal</h1>
+          <p className="brand-subtitle">Login to manage your thesis & projects</p>
         </div>
 
         <form className="auth-form" onSubmit={handleLogin}>
           {error && <div className="error-box">{error}</div>}
 
           <div className="input-group">
-            <FaEnvelope className="input-icon" />
             <input 
               type="email" 
               name="email" 
               className="form-input" 
-              placeholder="Email Address" 
+              placeholder="Student Email" 
               value={formData.email}
               onChange={handleChange}
               required 
             />
+            <FaEnvelope className="input-icon" />
           </div>
 
           <div className="input-group">
-            <FaLock className="input-icon" />
             <input 
               type={showPassword ? "text" : "password"} 
               name="password" 
@@ -213,6 +251,7 @@ const Login = () => {
               onChange={handleChange}
               required 
             />
+            <FaLock className="input-icon" />
             <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </div>
@@ -221,11 +260,11 @@ const Login = () => {
           <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Signing in..." : "Login"}
+            {loading ? "Signing in..." : "Access Portal"}
           </button>
 
           <div className="auth-footer">
-            Don't have an account? 
+            New Student? 
             <Link to="/signup" className="signup-link">Create Account</Link>
           </div>
         </form>

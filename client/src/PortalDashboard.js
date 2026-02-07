@@ -17,7 +17,6 @@ const PortalDashboard = () => {
   
   const API_URL = "https://cothm-research-portal.onrender.com";
   
-  // Safely get user data
   const user = JSON.parse(localStorage.getItem("user")) || { 
     firstName: "Student", 
     lastName: "", 
@@ -108,39 +107,81 @@ const PortalDashboard = () => {
         body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
         .portal-layout { display: flex; min-height: 100vh; position: relative; overflow-x: hidden; }
         
-        /* --- SIDEBAR FIXED --- */
+        /* --- SIDEBAR FIXED LAYOUT --- */
         .sidebar {
           background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-          color: white; width: 260px; transition: all 0.3s ease;
-          display: flex; flexDirection: column; justify-content: space-between; /* Pushes Footer to bottom */
-          position: fixed; height: 100vh; z-index: 50; top: 0; left: 0;
+          color: white; 
+          width: 260px; 
+          height: 100vh;
+          position: fixed; 
+          top: 0; 
+          left: 0;
+          z-index: 50;
+          transition: transform 0.3s ease;
+          
+          /* FLEXBOX MAGIC FOR LAYOUT */
+          display: flex; 
+          flex-direction: column; 
         }
-        .sidebar.closed { transform: translateX(-100%); width: 0; }
         
-        .sidebar-top { padding: 20px; }
+        .sidebar.closed { transform: translateX(-100%); }
+        
+        /* TOP SECTION (Logo) */
         .sidebar-header { 
-          display: flex; align-items: center; gap: 12px; 
-          padding-bottom: 20px; margin-bottom: 20px; 
+          padding: 25px; 
+          display: flex; 
+          align-items: center; 
+          gap: 12px; 
           border-bottom: 1px solid rgba(255,255,255,0.1); 
+          flex-shrink: 0; /* Prevents shrinking */
         }
         .sidebar-title { font-weight: 700; font-size: 20px; margin: 0; letter-spacing: 0.5px; }
+
+        /* MIDDLE SECTION (Navigation) - GROWS TO FILL SPACE */
+        .nav-links { 
+          padding: 20px; 
+          flex-grow: 1; /* This pushes the footer down */
+          overflow-y: auto; 
+        }
         
         .nav-item { 
-          padding: 12px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s; 
-          margin-bottom: 8px; color: rgba(255,255,255,0.8); font-weight: 500; 
-          display: flex; align-items: center; gap: 12px; 
+          padding: 12px 16px; 
+          border-radius: 10px; 
+          cursor: pointer; 
+          transition: all 0.2s; 
+          margin-bottom: 8px; 
+          color: rgba(255,255,255,0.8); 
+          font-weight: 500; 
+          display: flex; 
+          align-items: center; 
+          gap: 12px; 
         }
         .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; transform: translateX(5px); }
-        
-        /* Logout at bottom */
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .logout-btn {
-          width: 100%; padding: 12px; background: rgba(239, 68, 68, 0.2); 
-          color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; 
-          cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; 
-          font-weight: 600; transition: all 0.2s;
+
+        /* BOTTOM SECTION (Logout) - PINNED TO BOTTOM */
+        .sidebar-footer { 
+          padding: 20px; 
+          border-top: 1px solid rgba(255,255,255,0.1); 
+          flex-shrink: 0; /* Prevents shrinking */
+          background: rgba(0,0,0,0.1); /* Slight darker bg for distinction */
         }
-        .logout-btn:hover { background: rgba(239, 68, 68, 0.3); color: white; }
+        
+        .logout-btn {
+          width: 100%; 
+          padding: 12px; 
+          background: rgba(239, 68, 68, 0.15); 
+          color: #fca5a5; 
+          border: 1px solid rgba(239, 68, 68, 0.2); 
+          border-radius: 8px; 
+          cursor: pointer; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          gap: 8px; 
+          font-weight: 600; 
+          transition: all 0.2s;
+        }
+        .logout-btn:hover { background: rgba(239, 68, 68, 0.3); color: white; border-color: rgba(239, 68, 68, 0.5); }
 
         /* MAIN */
         .main-wrapper { flex: 1; margin-left: 260px; transition: margin 0.3s ease; width: 100%; }
@@ -197,19 +238,22 @@ const PortalDashboard = () => {
       {/* --- SIDEBAR FIXED LAYOUT --- */}
       <div className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
         
-        {/* TOP SECTION: Logo + Menu */}
-        <div className="sidebar-top">
+        {/* TOP + MIDDLE SECTION */}
+        <div style={{display:'flex', flexDirection:'column', flexGrow: 1}}>
           <div className="sidebar-header">
             <FaUserGraduate size={28} />
             <h1 className="sidebar-title">COTHM</h1>
           </div>
           
-          <div className="nav-item active">
-            <FaUserGraduate /> Dashboard
+          <div className="nav-links">
+            <div className="nav-item active">
+              <FaUserGraduate /> Dashboard
+            </div>
+            {/* You can add more menu items here later */}
           </div>
         </div>
 
-        {/* BOTTOM SECTION: Logout */}
+        {/* BOTTOM SECTION (PINNED) */}
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout}>
             <FaSignOutAlt /> Logout

@@ -6,8 +6,8 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer'); // ✅ NEW: For sending emails
-const crypto = require('crypto');         // ✅ NEW: For reset tokens
+const nodemailer = require('nodemailer'); 
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,12 +44,23 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage: storage });
 
-// --- EMAIL TRANSPORTER (NEW) ---
+// --- EMAIL TRANSPORTER (FIXED FOR BREVO) ---
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: "smtp-relay.brevo.com",  // ✅ Explicitly set Brevo Host
+    port: 587,                     // ✅ Explicitly set Port 587
+    secure: false,                 // ✅ Must be false for port 587
     auth: {
-        user: process.env.EMAIL_USER, // Reads from your .env
-        pass: process.env.EMAIL_PASS  // Reads from your .env
+        user: process.env.EMAIL_USER, // Your Brevo Login Email
+        pass: process.env.EMAIL_PASS  // Your Brevo SMTP Key
+    }
+});
+
+// Verify Email Connection on Startup
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("❌ Email Connection Error:", error);
+    } else {
+        console.log("✅ Email Server Ready (Brevo)");
     }
 });
 
@@ -63,8 +74,8 @@ const UserSchema = new mongoose.Schema({
     course: { type: String, default: "N/A" },
     batchNumber: { type: String, default: "N/A" },
     role: { type: String, enum: ["student", "supervisor", "admin"], default: "student" },
-    resetPasswordToken: String, // ✅ NEW
-    resetPasswordExpires: Date, // ✅ NEW
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', UserSchema);
@@ -83,7 +94,7 @@ const Project = mongoose.model('Project', ProjectSchema);
 
 // --- ROUTES ---
 
-// 1. FORGOT PASSWORD (NEW)
+// 1. FORGOT PASSWORD
 app.post('/api/auth/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -99,11 +110,11 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
         await user.save();
 
-        // Create Link (Uses FRONTEND_URL from .env)
+        // Create Link
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: process.env.EMAIL_FROM || process.env.EMAIL_USER, // Use proper "From" address
             to: user.email,
             subject: 'COTHM Portal - Password Reset',
             text: `You requested a password reset.\n\n` +
@@ -112,11 +123,12 @@ app.post('/api/auth/forgot-password', async (req, res) => {
                   `If you did not request this, please ignore this email.\n`
         };
 
-        transporter.sendMail(mailOptions, (err) => {
+        transporter.sendMail(mailOptions, (err, info) => {
             if (err) {
-                console.error("Email Error:", err);
+                console.error("Email Sending Error:", err);
                 return res.status(500).json({ message: "Error sending email. Check server logs." });
             }
+            console.log("📧 Email sent: " + info.response);
             res.json({ message: "Reset link sent to email" });
         });
 
@@ -126,7 +138,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     }
 });
 
-// 2. RESET PASSWORD (NEW)
+// 2. RESET PASSWORD
 app.post('/api/auth/reset-password/:token', async (req, res) => {
     try {
         const user = await User.findOne({
@@ -154,7 +166,7 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
     }
 });
 
-// 3. LOGIN (Universal + Master Key)
+// 3. LOGIN
 const handleLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -182,7 +194,6 @@ const handleLogin = async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        // Check Password (Supports old plain text & new hashed)
         let isMatch = false;
         if (user.password === password) {
             isMatch = true;
@@ -212,7 +223,7 @@ const handleLogin = async (req, res) => {
 };
 
 app.post('/api/auth/login', handleLogin);
-app.post('/api/login', handleLogin); // Fallback route
+app.post('/api/login', handleLogin);
 
 // 4. REGISTER
 app.post('/api/auth/register', async (req, res) => {
@@ -235,7 +246,7 @@ app.post('/api/auth/register', async (req, res) => {
     } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// 5. ADMIN UPDATE (Status + Comments)
+// 5. ADMIN UPDATE
 app.post('/api/admin/update', async (req, res) => {
     try {
         const { email, status, comment } = req.body;

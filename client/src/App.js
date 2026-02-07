@@ -1,3 +1,5 @@
+import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
@@ -73,6 +75,8 @@ function App() {
         
         {/* Catch all - redirect to role checker */}
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
     </Router>
   );

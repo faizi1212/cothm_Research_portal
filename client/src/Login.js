@@ -94,6 +94,13 @@ const Login = () => {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </span>
               </div>
+              
+              {/* ✅ NEW: Forgot Password Link */}
+              <div style={styles.forgotPassContainer}>
+                <Link to="/forgot-password" style={styles.forgotPassLink}>
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
             <button type="submit" disabled={loading} style={styles.loginBtn}>
@@ -121,7 +128,7 @@ const styles = {
   rightPanel: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", background: "white" },
   formContainer: { width: "100%", maxWidth: "420px" },
   logoHeader: { textAlign: "center", marginBottom: "40px" },
-  logoImage: { height: "80px", marginBottom: "20px" }, // Adjust height as needed
+  logoImage: { height: "80px", marginBottom: "20px" }, 
   welcomeText: { fontSize: "28px", fontWeight: "700", color: "#333", marginBottom: "8px" },
   subText: { color: "#666", fontSize: "15px" },
   inputGroup: { marginBottom: "25px" },
@@ -130,6 +137,11 @@ const styles = {
   inputIcon: { position: "absolute", left: "15px", color: "#1e3c72" },
   input: { width: "100%", padding: "15px 45px", borderRadius: "10px", border: "1px solid #e1e5ee", fontSize: "15px", outline: "none", transition: "all 0.3s", background: "#f8f9fc" },
   eyeIcon: { position: "absolute", right: "15px", cursor: "pointer", color: "#999" },
+  
+  // ✅ NEW STYLES
+  forgotPassContainer: { textAlign: "right", marginTop: "12px" },
+  forgotPassLink: { color: "#1e3c72", fontSize: "14px", fontWeight: "600", textDecoration: "none" },
+  
   loginBtn: { width: "100%", padding: "16px", background: "linear-gradient(90deg, #1e3c72 0%, #2a5298 100%)", color: "white", border: "none", borderRadius: "10px", fontSize: "16px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: "0 10px 20px rgba(30, 60, 114, 0.2)", transition: "transform 0.2s" },
   footer: { marginTop: "30px", textAlign: "center", fontSize: "14px", color: "#666" },
   link: { color: "#1e3c72", fontWeight: "700", textDecoration: "none" }

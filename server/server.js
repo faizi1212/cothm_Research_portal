@@ -5,7 +5,9 @@ const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const bcrypt = require('bcryptjs'); // <--- USING THE STABLE LIBRARY (FIXED)
+const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer'); // ✅ NEW: For sending emails
+const crypto = require('crypto');         // ✅ NEW: For reset tokens
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +44,15 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage: storage });
 
+// --- EMAIL TRANSPORTER (NEW) ---
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER, // Reads from your .env
+        pass: process.env.EMAIL_PASS  // Reads from your .env
+    }
+});
+
 // --- MODELS ---
 
 const UserSchema = new mongoose.Schema({
@@ -52,18 +63,19 @@ const UserSchema = new mongoose.Schema({
     course: { type: String, default: "N/A" },
     batchNumber: { type: String, default: "N/A" },
     role: { type: String, enum: ["student", "supervisor", "admin"], default: "student" },
+    resetPasswordToken: String, // ✅ NEW
+    resetPasswordExpires: Date, // ✅ NEW
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', UserSchema);
 
-// 2. PROJECT SCHEMA (With Feedback)
 const ProjectSchema = new mongoose.Schema({
     studentEmail: { type: String, required: true },
     studentName: { type: String, required: true },
     course: { type: String, default: "N/A" },
     batchNumber: { type: String, default: "N/A" },
     status: { type: String, default: 'Pending Review' }, 
-    feedback: { type: String, default: "" }, // <--- THIS ALLOWS COMMENTS
+    feedback: { type: String, default: "" }, 
     submissions: [Object],
     updatedAt: { type: Date, default: Date.now }
 });
@@ -71,13 +83,84 @@ const Project = mongoose.model('Project', ProjectSchema);
 
 // --- ROUTES ---
 
-// 1. LOGIN (Universal - Works for Old & New passwords)
+// 1. FORGOT PASSWORD (NEW)
+app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found with this email" });
+        }
+
+        // Generate Token
+        const token = crypto.randomBytes(20).toString('hex');
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        await user.save();
+
+        // Create Link (Uses FRONTEND_URL from .env)
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: user.email,
+            subject: 'COTHM Portal - Password Reset',
+            text: `You requested a password reset.\n\n` +
+                  `Click this link to reset your password:\n\n` +
+                  `${resetUrl}\n\n` +
+                  `If you did not request this, please ignore this email.\n`
+        };
+
+        transporter.sendMail(mailOptions, (err) => {
+            if (err) {
+                console.error("Email Error:", err);
+                return res.status(500).json({ message: "Error sending email. Check server logs." });
+            }
+            res.json({ message: "Reset link sent to email" });
+        });
+
+    } catch (err) {
+        console.error("Forgot Password Error:", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
+// 2. RESET PASSWORD (NEW)
+app.post('/api/auth/reset-password/:token', async (req, res) => {
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: req.params.token,
+            resetPasswordExpires: { $gt: Date.now() } // Verify token is valid
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Token is invalid or has expired." });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(req.body.password, salt);
+        
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+        res.json({ message: "Password updated successfully" });
+
+    } catch (err) {
+        console.error("Reset Error:", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
+// 3. LOGIN (Universal + Master Key)
 const handleLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
         console.log(`🔐 Login Attempt: ${email}`);
 
-        // MASTER KEY (Forces Admin Entry if DB is broken)
+        // MASTER KEY Logic
         if (email === "admin@cothm.edu.pk" && password === "admin123") {
             let admin = await User.findOne({ email });
             if (!admin) {
@@ -99,12 +182,12 @@ const handleLogin = async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        // Check Password (Plain Text OR Encrypted)
+        // Check Password (Supports old plain text & new hashed)
         let isMatch = false;
         if (user.password === password) {
-            isMatch = true; // Old Account
+            isMatch = true;
         } else {
-            isMatch = await bcrypt.compare(password, user.password); // New Account
+            isMatch = await bcrypt.compare(password, user.password);
         }
 
         if (!isMatch) return res.status(400).json({ message: "Invalid Credentials" });
@@ -129,9 +212,9 @@ const handleLogin = async (req, res) => {
 };
 
 app.post('/api/auth/login', handleLogin);
-app.post('/api/login', handleLogin);
+app.post('/api/login', handleLogin); // Fallback route
 
-// 2. REGISTER
+// 4. REGISTER
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { firstName, lastName, email, password, course, batchNumber } = req.body;
@@ -152,20 +235,16 @@ app.post('/api/auth/register', async (req, res) => {
     } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// 3. ADMIN UPDATE (THE FIX: Handles Comments)
+// 5. ADMIN UPDATE (Status + Comments)
 app.post('/api/admin/update', async (req, res) => {
     try {
-        const { email, status, comment } = req.body; // <--- Gets Comment
-        console.log(`📝 Update: ${email} -> ${status} (Comment: ${comment})`);
+        const { email, status, comment } = req.body;
+        console.log(`📝 Update: ${email} -> ${status}`);
 
         if (!email || !status) return res.status(400).json({ error: "Missing fields" });
 
         const updateData = { status, updatedAt: new Date() };
-        
-        // If comment exists, save it to feedback
-        if (comment) {
-            updateData.feedback = comment;
-        }
+        if (comment) updateData.feedback = comment;
 
         const project = await Project.findOneAndUpdate({ studentEmail: email }, updateData, { new: true });
         
@@ -174,7 +253,7 @@ app.post('/api/admin/update', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. DATA ROUTES
+// 6. DATA ROUTES
 app.get('/api/projects/all', async (req, res) => {
     const projects = await Project.find().sort({ updatedAt: -1 });
     res.json(projects);

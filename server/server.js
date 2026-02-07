@@ -47,12 +47,12 @@ const upload = multer({ storage: storage });
 
 // --- EMAIL TRANSPORTER (FIXED FOR BREVO) ---
 const transporter = nodemailer.createTransport({
-    host: "smtp-relay.brevo.com",  // ✅ Explicitly set Brevo Host
-    port: 587,                     // ✅ Explicitly set Port 587
-    secure: false,                 // ✅ Must be false for port 587
+    host: "smtp-relay.brevo.com",
+    port: 465,           // ✅ CHANGED to 465
+    secure: true,        // ✅ CHANGED to true (Required for 465)
     auth: {
-        user: process.env.EMAIL_USER, // Your Brevo Login Email
-        pass: process.env.EMAIL_PASS  // Your Brevo SMTP Key
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 

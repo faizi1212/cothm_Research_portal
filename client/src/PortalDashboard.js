@@ -4,9 +4,23 @@ import {
   FaFileUpload, FaCheckCircle, FaExclamationCircle, FaClock, 
   FaUserGraduate, FaBars, FaTimes, FaCloudUploadAlt, FaHistory, 
   FaBullhorn, FaFolderOpen, FaDownload, FaCalendarCheck, FaCog, 
-  FaBell, FaSignOutAlt, FaFilePdf, FaMoon, FaSun, FaTasks, FaTrash
+  FaBell, FaSignOutAlt, FaFilePdf, FaMoon, FaSun, FaTasks, FaTrash, FaSpinner
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+
+// --- SKELETON COMPONENT (For Loading) ---
+const Skeleton = ({ height, width, style }) => (
+  <div style={{
+    height: height || '20px', 
+    width: width || '100%', 
+    background: 'linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.5s infinite',
+    borderRadius: '8px',
+    marginBottom: '10px',
+    ...style
+  }}></div>
+);
 
 const PortalDashboard = () => {
   // --- STATE ---
@@ -14,9 +28,15 @@ const PortalDashboard = () => {
   const [data, setData] = useState({ project: null, announcements: [], resources: [], deadline: null, notifications: [] });
   const [tasks, setTasks] = useState([]);
   const [daysLeft, setDaysLeft] = useState(null);
+  
+  // Upload & Drag-Drop State
   const [file, setFile] = useState(null);
   const [uploadStage, setUploadStage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Initial load
+  const [uploading, setUploading] = useState(false); // File upload state
+  const [isDragging, setIsDragging] = useState(false); // Drag hover state
+  
+  // UI State
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [showNotif, setShowNotif] = useState(false);
   const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
@@ -34,8 +54,6 @@ const PortalDashboard = () => {
     fetchAllData(); 
     fetchTasks();
     if (window.innerWidth < 1024) setSidebarOpen(false);
-    
-    // Apply theme
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
@@ -51,6 +69,7 @@ const PortalDashboard = () => {
       if (s.data.deadline) setDaysLeft(Math.ceil((new Date(s.data.deadline) - new Date()) / (1000 * 60 * 60 * 24)));
       setData({ project: p.data[0] || null, announcements: a.data, resources: r.data, deadline: s.data.deadline ? new Date(s.data.deadline) : null, notifications: n.data });
     } catch (err) { console.error("Error loading data", err); }
+    finally { setLoading(false); }
   };
 
   const fetchTasks = async () => {
@@ -58,6 +77,17 @@ const PortalDashboard = () => {
       const res = await axios.get(`${API_URL}/api/tasks?email=${user.email}`);
       setTasks(res.data);
     } catch(err) { console.error(err); }
+  };
+
+  // --- DRAG & DROP HANDLERS ---
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+    }
   };
 
   // --- ACTIONS ---
@@ -75,7 +105,7 @@ const PortalDashboard = () => {
 
   const moveTask = async (id, currentStatus) => {
     const nextStatus = currentStatus === "To Do" ? "In Progress" : "Done";
-    if (currentStatus === "Done") return; // Can't move further
+    if (currentStatus === "Done") return;
     await axios.put(`${API_URL}/api/tasks/${id}`, { status: nextStatus });
     fetchTasks();
   };
@@ -89,7 +119,7 @@ const PortalDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file || !uploadStage) return alert("Select file & stage");
-    setLoading(true);
+    setUploading(true);
     try {
       const fd = new FormData();
       fd.append("file", file); fd.append("studentEmail", user.email);
@@ -97,7 +127,7 @@ const PortalDashboard = () => {
       fd.append("stage", uploadStage); fd.append("batchNumber", user.batchNumber);
       await axios.post(`${API_URL}/api/submit`, fd);
       alert("✅ Submitted!"); setFile(null); fetchAllData();
-    } catch (err) { alert("Failed"); } finally { setLoading(false); }
+    } catch (err) { alert("Failed"); } finally { setUploading(false); }
   };
 
   const handleUpdateProfile = async (e) => {
@@ -109,6 +139,14 @@ const PortalDashboard = () => {
   };
 
   const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
+
+  // --- UI HELPERS ---
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
 
   return (
     <div className="portal-layout">
@@ -122,7 +160,7 @@ const PortalDashboard = () => {
           --primary: #60a5fa; --bg: #0f172a; --sidebar: #020617; --surface: #1e293b; --text: #f8fafc; --text-light: #94a3b8; --border: #334155;
         }
         
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; }
         .portal-layout { display: flex; min-height: 100vh; overflow-x: hidden; }
         
         .sidebar { width: 260px; background: var(--sidebar); color: white; position: fixed; height: 100vh; z-index: 50; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; transition: 0.3s; }
@@ -147,9 +185,16 @@ const PortalDashboard = () => {
         .card { background: var(--surface); border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); transition: 0.3s; }
         .card-header { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
         
-        .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; background: rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s; margin-bottom: 15px; }
+        /* DRAG & DROP ZONE */
+        .upload-zone { 
+          border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; 
+          background: rgba(0,0,0,0.02); cursor: pointer; transition: 0.3s; margin-bottom: 15px; position: relative;
+        }
+        .upload-zone.drag-active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); transform: scale(1.02); }
         .upload-zone:hover { border-color: var(--primary); }
-        .btn-primary { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        
+        .btn-primary { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
         .input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; box-sizing: border-box; }
         
         /* KANBAN */
@@ -160,6 +205,8 @@ const PortalDashboard = () => {
         .task-card:hover { transform: translateY(-2px); border-color: var(--primary); }
         .task-actions { position: absolute; top: 10px; right: 10px; display: none; gap: 5px; }
         .task-card:hover .task-actions { display: flex; }
+        
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         
         @media (max-width: 1024px) { .sidebar { position: fixed; } .main-wrapper { margin-left: 0; } .kanban-board { grid-template-columns: 1fr; } }
       `}</style>
@@ -198,81 +245,117 @@ const PortalDashboard = () => {
         </div>
 
         <div className="content">
-          {daysLeft !== null && daysLeft > 0 && <div style={{background:'#fff7ed', border:'1px solid #ffedd5', color:'#c2410c', padding:15, borderRadius:12, marginBottom:25, display:'flex', alignItems:'center', gap:10, fontWeight:'600'}}><FaCalendarCheck/> Deadline: {daysLeft} Days Left</div>}
+          <h2 className="page-title">{getGreeting()}, {user.firstName} 👋</h2>
+          <p className="page-sub">Here is what's happening with your research today.</p>
 
-          {/* DASHBOARD */}
-          {activeTab === 'Dashboard' && (
+          {daysLeft !== null && daysLeft > 0 && <div style={{background:'#fff7ed', border:'1px solid #ffedd5', color:'#c2410c', padding:15, borderRadius:12, marginBottom:25, display:'flex', alignItems:'center', gap:10, fontWeight:'600'}}><FaCalendarCheck/> Final Submission Deadline: {daysLeft} Days Remaining ({data.deadline?.toLocaleDateString()})</div>}
+
+          {/* LOADING SKELETONS */}
+          {loading ? (
             <div className="grid">
-              <div>
-                <div className="card" style={{marginBottom:25}}>
-                  <div className="card-header"><FaBullhorn/> Announcements</div>
-                  {data.announcements.map(a => <div key={a._id} style={{background: darkMode ? '#1e293b' : '#eff6ff', padding:15, borderRadius:8, marginBottom:10}}><strong>{a.title}</strong><p style={{margin:'5px 0', fontSize:14}}>{a.message}</p></div>)}
-                </div>
-                <div className="card">
-                  <div className="card-header"><FaClock/> Status</div>
-                  <div style={{background: data.project?.status === 'Approved' ? '#dcfce7' : '#f1f5f9', color: data.project?.status === 'Approved' ? '#166534' : 'inherit', padding:20, borderRadius:12, textAlign:'center', fontSize:20, fontWeight:'800'}}>{data.project?.status || "Not Started"}</div>
-                </div>
+              <div className="card">
+                <Skeleton height="30px" width="60%"/>
+                <Skeleton height="150px"/>
               </div>
               <div className="card">
-                <div className="card-header"><FaCloudUploadAlt/> Submit</div>
-                <form onSubmit={handleSubmit}>
-                  <select className="input" style={{marginBottom:15}} value={uploadStage} onChange={e=>setUploadStage(e.target.value)}><option value="">Select Stage</option><option>Proposal</option><option>Chapter 1</option><option>Final</option></select>
-                  <div className="upload-zone"><input type="file" id="file" style={{display:'none'}} onChange={e=>setFile(e.target.files[0])}/><label htmlFor="file" style={{cursor:'pointer', width:'100%', display:'block'}}>{file ? file.name : "Click to Upload"}</label></div>
-                  <button className="btn-primary" disabled={loading}>{loading ? "..." : "Submit"}</button>
-                </form>
-                {data.project?.submissions?.length > 0 && <div style={{marginTop:20, maxHeight:200, overflowY:'auto'}}>{data.project.submissions.map((s,i)=><div key={i} style={{padding:10, borderBottom:'1px solid var(--border)', fontSize:13}}>{s.stage} - {new Date(s.date).toLocaleDateString()}</div>)}</div>}
+                <Skeleton height="30px" width="40%"/>
+                <Skeleton height="200px"/>
               </div>
             </div>
-          )}
+          ) : (
+            <>
+              {/* DASHBOARD */}
+              {activeTab === 'Dashboard' && (
+                <div className="grid">
+                  <div>
+                    <div className="card" style={{marginBottom:25}}>
+                      <div className="card-header"><FaBullhorn/> Announcements</div>
+                      {data.announcements.length === 0 ? <p style={{color:'var(--text-light)'}}>No updates yet.</p> : data.announcements.map(a => <div key={a._id} style={{background: darkMode ? '#1e293b' : '#eff6ff', padding:15, borderRadius:8, marginBottom:10}}><strong>{a.title}</strong><p style={{margin:'5px 0', fontSize:14}}>{a.message}</p></div>)}
+                    </div>
+                    <div className="card">
+                      <div className="card-header"><FaClock/> Status</div>
+                      <div style={{background: data.project?.status === 'Approved' ? '#dcfce7' : '#f1f5f9', color: data.project?.status === 'Approved' ? '#166534' : '#64748b', padding:20, borderRadius:12, textAlign:'center', fontSize:20, fontWeight:'800'}}>{data.project?.status || "Not Started"}</div>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-header"><FaCloudUploadAlt/> Submit Work</div>
+                    <form onSubmit={handleSubmit}>
+                      <select className="input" style={{marginBottom:15}} value={uploadStage} onChange={e=>setUploadStage(e.target.value)}><option value="">Select Stage</option><option>Proposal</option><option>Chapter 1</option><option>Final</option></select>
+                      
+                      {/* DRAG & DROP ZONE */}
+                      <div 
+                        className={`upload-zone ${isDragging ? 'drag-active' : ''}`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
+                        <input type="file" id="file" style={{display:'none'}} onChange={e=>setFile(e.target.files[0])}/>
+                        <label htmlFor="file" style={{cursor:'pointer', width:'100%', display:'block'}}>
+                          <FaCloudUploadAlt size={40} color={isDragging ? "#3b82f6" : "#94a3b8"} style={{marginBottom:15}}/>
+                          <div style={{fontWeight:600, fontSize:16}}>{file ? file.name : "Drag & Drop or Click to Upload"}</div>
+                          <div style={{fontSize:12, color:'var(--text-light)', marginTop:5}}>Supports PDF, DOCX (Max 10MB)</div>
+                        </label>
+                      </div>
 
-          {/* KANBAN BOARD */}
-          {activeTab === 'Tasks' && (
-            <div>
-              <div style={{marginBottom:20, display:'flex', gap:10}}>
-                <input className="input" placeholder="New Task..." value={newTask} onChange={e=>setNewTask(e.target.value)} style={{maxWidth:300}}/>
-                <button className="btn-primary" style={{width:'auto', padding:'0 25px'}} onClick={addTask}>Add</button>
-              </div>
-              <div className="kanban-board">
-                {["To Do", "In Progress", "Done"].map(status => (
-                  <div key={status} className="kanban-col">
-                    <div className="kanban-title">{status}</div>
-                    {tasks.filter(t => t.status === status).map(t => (
-                      <div key={t._id} className="task-card" onClick={() => moveTask(t._id, t.status)}>
-                        {t.title}
-                        <div className="task-actions"><FaTrash color="red" onClick={(e) => { e.stopPropagation(); deleteTask(t._id); }}/></div>
+                      <button className="btn-primary" disabled={uploading}>
+                        {uploading ? <><FaSpinner className="spin"/> Uploading...</> : "Submit for Review"}
+                      </button>
+                    </form>
+                    {data.project?.submissions?.length > 0 && <div style={{marginTop:20, maxHeight:200, overflowY:'auto'}}>{data.project.submissions.map((s,i)=><div key={i} style={{padding:10, borderBottom:'1px solid var(--border)', fontSize:13}}>{s.stage} - {new Date(s.date).toLocaleDateString()}</div>)}</div>}
+                  </div>
+                </div>
+              )}
+
+              {/* KANBAN */}
+              {activeTab === 'Tasks' && (
+                <div>
+                  <div style={{marginBottom:20, display:'flex', gap:10}}>
+                    <input className="input" placeholder="New Task..." value={newTask} onChange={e=>setNewTask(e.target.value)} style={{maxWidth:300}}/>
+                    <button className="btn-primary" style={{width:'auto', padding:'0 25px'}} onClick={addTask}>Add</button>
+                  </div>
+                  <div className="kanban-board">
+                    {["To Do", "In Progress", "Done"].map(status => (
+                      <div key={status} className="kanban-col">
+                        <div className="kanban-title">{status}</div>
+                        {tasks.filter(t => t.status === status).map(t => (
+                          <div key={t._id} className="task-card" onClick={() => moveTask(t._id, t.status)}>
+                            {t.title}
+                            <div className="task-actions"><FaTrash color="red" onClick={(e) => { e.stopPropagation(); deleteTask(t._id); }}/></div>
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </div>
+              )}
 
-          {/* RESOURCES */}
-          {activeTab === 'Resources' && (
-            <div className="card">
-              <div className="card-header"><FaFolderOpen/> Library</div>
-              <div className="grid">
-                {data.resources.map(r => (
-                  <div key={r._id} style={{padding:15, border:'1px solid var(--border)', borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                    <div style={{display:'flex', gap:12, alignItems:'center'}}><FaFilePdf color="#e11d48" size={24}/><div><strong>{r.title}</strong><br/><span style={{fontSize:11}}>{r.category}</span></div></div>
-                    <a href={r.fileUrl} target="_blank" rel="noreferrer"><FaDownload/></a>
+              {/* RESOURCES */}
+              {activeTab === 'Resources' && (
+                <div className="card">
+                  <div className="card-header"><FaFolderOpen/> Library</div>
+                  <div className="grid">
+                    {data.resources.map(r => (
+                      <div key={r._id} style={{padding:15, border:'1px solid var(--border)', borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                        <div style={{display:'flex', gap:12, alignItems:'center'}}><FaFilePdf color="#e11d48" size={24}/><div><strong>{r.title}</strong><br/><span style={{fontSize:11}}>{r.category}</span></div></div>
+                        <a href={r.fileUrl} target="_blank" rel="noreferrer"><FaDownload/></a>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </div>
+              )}
 
-          {/* SETTINGS */}
-          {activeTab === 'Settings' && (
-            <div className="card" style={{maxWidth:500, margin:'0 auto'}}>
-              <div className="card-header"><FaCog/> Profile</div>
-              <form onSubmit={handleUpdateProfile}>
-                <div style={{marginBottom:15}}><label style={{fontSize:13, fontWeight:600}}>Name</label><input className="input" value={profile.firstName} onChange={e=>setProfile({...profile, firstName:e.target.value})}/></div>
-                <div style={{marginBottom:15}}><label style={{fontSize:13, fontWeight:600}}>Password</label><input className="input" type="password" placeholder="New Password" value={profile.password} onChange={e=>setProfile({...profile, password:e.target.value})}/></div>
-                <button className="btn-primary">Update</button>
-              </form>
-            </div>
+              {/* SETTINGS */}
+              {activeTab === 'Settings' && (
+                <div className="card" style={{maxWidth:500, margin:'0 auto'}}>
+                  <div className="card-header"><FaCog/> Profile</div>
+                  <form onSubmit={handleUpdateProfile}>
+                    <div style={{marginBottom:15}}><label style={{fontSize:13, fontWeight:600}}>Name</label><input className="input" value={profile.firstName} onChange={e=>setProfile({...profile, firstName:e.target.value})}/></div>
+                    <div style={{marginBottom:15}}><label style={{fontSize:13, fontWeight:600}}>Password</label><input className="input" type="password" placeholder="New Password" value={profile.password} onChange={e=>setProfile({...profile, password:e.target.value})}/></div>
+                    <button className="btn-primary">Update</button>
+                  </form>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -3,7 +3,8 @@ import axios from "axios";
 import { 
   FaFileUpload, FaCheckCircle, FaExclamationCircle, FaClock, 
   FaUserGraduate, FaBars, FaTimes, FaCloudUploadAlt, FaHistory, 
-  FaBullhorn, FaFolderOpen, FaDownload, FaCalendarCheck, FaCog, FaBell, FaSignOutAlt
+  FaBullhorn, FaFolderOpen, FaDownload, FaCalendarCheck, FaCog, FaBell, FaSignOutAlt,
+  FaFilePdf // <--- ADDED THIS MISSING IMPORT
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -32,10 +33,7 @@ const PortalDashboard = () => {
   // --- INITIAL LOAD ---
   useEffect(() => { 
     if(!user.email) navigate("/login");
-    
-    // Set initial profile state
     setProfile({ firstName: user.firstName, lastName: user.lastName, password: "" });
-    
     fetchAllData(); 
     if (window.innerWidth < 1024) setSidebarOpen(false);
   }, []);
@@ -50,7 +48,6 @@ const PortalDashboard = () => {
         axios.get(`${API_URL}/api/notifications?email=${user.email}`)
       ]);
 
-      // Calculate Deadline
       if (s.data.deadline) {
         setDaysLeft(Math.ceil((new Date(s.data.deadline) - new Date()) / (1000 * 60 * 60 * 24)));
       }
@@ -97,16 +94,14 @@ const PortalDashboard = () => {
         lastName: profile.lastName, 
         password: profile.password 
       });
-      // Update local storage
       localStorage.setItem("user", JSON.stringify({ ...user, firstName: res.data.user.firstName, lastName: res.data.user.lastName }));
       alert("✅ Profile Updated Successfully!");
-      setProfile({...profile, password: ""}); // Clear password field
+      setProfile({...profile, password: ""});
     } catch(err) { alert("Update Failed"); }
   };
 
   const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
 
-  // Helper for Status Colors
   const getStatusColor = (status) => {
     switch(status) {
       case 'Approved': return { bg: '#dcfce7', text: '#166534', icon: <FaCheckCircle/> };

@@ -4,7 +4,8 @@ import {
   FaFileUpload, FaCheckCircle, FaExclamationCircle, FaClock, 
   FaUserGraduate, FaBars, FaTimes, FaCloudUploadAlt, FaHistory, 
   FaBullhorn, FaFolderOpen, FaDownload, FaCalendarCheck, FaCog, 
-  FaBell, FaSignOutAlt, FaFilePdf, FaMoon, FaSun, FaTasks, FaTrash, FaSpinner
+  FaBell, FaSignOutAlt, FaFilePdf, FaMoon, FaSun, FaTasks, FaTrash, 
+  FaSpinner, FaRobot, FaMagic, FaQuoteRight, FaCopy // <--- Added AI Icons
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -13,7 +14,7 @@ const Skeleton = ({ height, width, style }) => (
   <div style={{
     height: height || '20px', 
     width: width || '100%', 
-    background: 'linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%)',
+    background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%)',
     backgroundSize: '200% 100%',
     animation: 'shimmer 1.5s infinite',
     borderRadius: '8px',
@@ -32,9 +33,16 @@ const PortalDashboard = () => {
   // Upload & Drag-Drop State
   const [file, setFile] = useState(null);
   const [uploadStage, setUploadStage] = useState("");
-  const [loading, setLoading] = useState(true); // Initial load
-  const [uploading, setUploading] = useState(false); // File upload state
-  const [isDragging, setIsDragging] = useState(false); // Drag hover state
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // --- NEW: AI TOOLS STATE ---
+  const [aiKeyword, setAiKeyword] = useState("");
+  const [generatedTopics, setGeneratedTopics] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [citationData, setCitationData] = useState({ author: "", year: "", title: "", url: "" });
+  const [generatedCitation, setGeneratedCitation] = useState("");
   
   // UI State
   const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -73,92 +81,67 @@ const PortalDashboard = () => {
   };
 
   const fetchTasks = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/tasks?email=${user.email}`);
-      setTasks(res.data);
-    } catch(err) { console.error(err); }
+    try { const res = await axios.get(`${API_URL}/api/tasks?email=${user.email}`); setTasks(res.data); } catch(err) { console.error(err); }
   };
 
-  // --- DRAG & DROP HANDLERS ---
+  // --- NEW: AI FUNCTIONS ---
+  const generateTopics = () => {
+    if(!aiKeyword.trim()) return;
+    setIsGenerating(true);
+    // Simulate AI Delay
+    setTimeout(() => {
+      const templates = [
+        `The Impact of ${aiKeyword} on Modern Industry Standards`,
+        `Optimizing ${aiKeyword} using Data-Driven Strategies`,
+        `A Comparative Analysis of ${aiKeyword} in Global Markets`,
+        `Sustainable Approaches to ${aiKeyword} in the 21st Century`,
+        `Future Trends: Integrating AI with ${aiKeyword}`
+      ];
+      setGeneratedTopics(templates.sort(() => 0.5 - Math.random()).slice(0, 3));
+      setIsGenerating(false);
+    }, 1500);
+  };
+
+  const generateCitation = () => {
+    const { author, year, title, url } = citationData;
+    if(!author || !title) return;
+    setGeneratedCitation(`${author} (${year || "n.d."}). ${title}. Retrieved from ${url || "#"}`);
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert("Copied to clipboard! 📋");
+  };
+
+  // --- EXISTING ACTIONS ---
   const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  // --- ACTIONS ---
-  const toggleTheme = () => {
-    const newTheme = !darkMode;
-    setDarkMode(newTheme);
-    localStorage.setItem("theme", newTheme ? "dark" : "light");
-  };
-
-  const addTask = async () => {
-    if(!newTask.trim()) return;
-    const res = await axios.post(`${API_URL}/api/tasks`, { studentEmail: user.email, title: newTask, status: "To Do" });
-    setTasks([res.data, ...tasks]); setNewTask("");
-  };
-
-  const moveTask = async (id, currentStatus) => {
-    const nextStatus = currentStatus === "To Do" ? "In Progress" : "Done";
-    if (currentStatus === "Done") return;
-    await axios.put(`${API_URL}/api/tasks/${id}`, { status: nextStatus });
-    fetchTasks();
-  };
-
-  const deleteTask = async (id) => {
-    if(!window.confirm("Delete task?")) return;
-    await axios.delete(`${API_URL}/api/tasks/${id}`);
-    fetchTasks();
-  };
-
+  const handleDrop = (e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); };
+  
+  const toggleTheme = () => { setDarkMode(!darkMode); localStorage.setItem("theme", !darkMode ? "dark" : "light"); };
+  const addTask = async () => { if(!newTask.trim()) return; const res = await axios.post(`${API_URL}/api/tasks`, { studentEmail: user.email, title: newTask, status: "To Do" }); setTasks([res.data, ...tasks]); setNewTask(""); };
+  const moveTask = async (id, status) => { if(status === "Done") return; await axios.put(`${API_URL}/api/tasks/${id}`, { status: status === "To Do" ? "In Progress" : "Done" }); fetchTasks(); };
+  const deleteTask = async (id) => { if(window.confirm("Delete?")) { await axios.delete(`${API_URL}/api/tasks/${id}`); fetchTasks(); } };
+  
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!file || !uploadStage) return alert("Select file & stage");
+    e.preventDefault(); if (!file || !uploadStage) return alert("Select file & stage");
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file); fd.append("studentEmail", user.email);
-      fd.append("studentName", `${user.firstName} ${user.lastName}`);
-      fd.append("stage", uploadStage); fd.append("batchNumber", user.batchNumber);
-      await axios.post(`${API_URL}/api/submit`, fd);
-      alert("✅ Submitted!"); setFile(null); fetchAllData();
+      const fd = new FormData(); fd.append("file", file); fd.append("studentEmail", user.email); fd.append("studentName", `${user.firstName} ${user.lastName}`); fd.append("stage", uploadStage); fd.append("batchNumber", user.batchNumber);
+      await axios.post(`${API_URL}/api/submit`, fd); alert("✅ Submitted!"); setFile(null); fetchAllData();
     } catch (err) { alert("Failed"); } finally { setUploading(false); }
   };
 
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.put(`${API_URL}/api/auth/update-profile`, { email: user.email, ...profile });
-      alert("✅ Updated!");
-    } catch(err) { alert("Failed"); }
-  };
-
+  const handleUpdateProfile = async (e) => { e.preventDefault(); try { await axios.put(`${API_URL}/api/auth/update-profile`, { email: user.email, ...profile }); alert("✅ Updated!"); } catch(err) { alert("Failed"); } };
   const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
-
-  // --- UI HELPERS ---
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 18) return "Good Afternoon";
-    return "Good Evening";
-  };
+  const getGreeting = () => { const h = new Date().getHours(); return h < 12 ? "Good Morning" : h < 18 ? "Good Afternoon" : "Good Evening"; };
 
   return (
     <div className="portal-layout">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        :root {
-          --primary: #1e3c72; --bg: #f1f5f9; --sidebar: #0f172a; --surface: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0;
-        }
-        [data-theme='dark'] {
-          --primary: #60a5fa; --bg: #0f172a; --sidebar: #020617; --surface: #1e293b; --text: #f8fafc; --text-light: #94a3b8; --border: #334155;
-        }
+        :root { --primary: #1e3c72; --bg: #f1f5f9; --sidebar: #0f172a; --surface: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; }
+        [data-theme='dark'] { --primary: #60a5fa; --bg: #0f172a; --sidebar: #020617; --surface: #1e293b; --text: #f8fafc; --text-light: #94a3b8; --border: #334155; }
         
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; }
         .portal-layout { display: flex; min-height: 100vh; overflow-x: hidden; }
@@ -174,7 +157,6 @@ const PortalDashboard = () => {
         
         .main-wrapper { flex: 1; margin-left: 260px; transition: margin 0.3s ease; width: 100%; display: flex; flex-direction: column; }
         .main-wrapper.full { margin-left: 0; }
-        
         .navbar { background: var(--surface); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 40; transition: background 0.3s; }
         .icon-btn { cursor: pointer; color: var(--text-light); font-size: 20px; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; transition: 0.2s; }
         .icon-btn:hover { background: rgba(0,0,0,0.05); color: var(--text); }
@@ -185,19 +167,13 @@ const PortalDashboard = () => {
         .card { background: var(--surface); border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); transition: 0.3s; }
         .card-header { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
         
-        /* DRAG & DROP ZONE */
-        .upload-zone { 
-          border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; 
-          background: rgba(0,0,0,0.02); cursor: pointer; transition: 0.3s; margin-bottom: 15px; position: relative;
-        }
+        .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; background: rgba(0,0,0,0.02); cursor: pointer; transition: 0.3s; margin-bottom: 15px; position: relative; }
         .upload-zone.drag-active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); transform: scale(1.02); }
         .upload-zone:hover { border-color: var(--primary); }
-        
         .btn-primary { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
         .input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; box-sizing: border-box; }
         
-        /* KANBAN */
         .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; overflow-x: auto; }
         .kanban-col { background: rgba(0,0,0,0.03); padding: 15px; border-radius: 12px; min-height: 400px; border: 1px solid var(--border); }
         .kanban-title { font-weight: 700; margin-bottom: 15px; color: var(--text-light); text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
@@ -205,9 +181,13 @@ const PortalDashboard = () => {
         .task-card:hover { transform: translateY(-2px); border-color: var(--primary); }
         .task-actions { position: absolute; top: 10px; right: 10px; display: none; gap: 5px; }
         .task-card:hover .task-actions { display: flex; }
+
+        /* AI TOOLS STYLES */
+        .ai-result { background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(59, 130, 246, 0.2); animation: fadeIn 0.5s; cursor: pointer; }
+        .ai-result:hover { background: rgba(59, 130, 246, 0.15); }
         
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 1024px) { .sidebar { position: fixed; } .main-wrapper { margin-left: 0; } .kanban-board { grid-template-columns: 1fr; } }
       `}</style>
 
@@ -215,9 +195,14 @@ const PortalDashboard = () => {
       <div className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
         <div className="logo-area"><div className="logo-icon"><FaUserGraduate/></div><div><h3 style={{margin:0}}>COTHM</h3><span style={{fontSize:12, opacity:0.7}}>Student Portal</span></div></div>
         <div className="nav-links">
-          {['Dashboard', 'Tasks', 'Resources', 'Settings'].map(tab => (
+          {['Dashboard', 'Tasks', 'AI Tools', 'Resources', 'Settings'].map(tab => (
             <div key={tab} className={`nav-item ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>
-              {tab === 'Dashboard' && <FaUserGraduate/>} {tab === 'Tasks' && <FaTasks/>} {tab === 'Resources' && <FaFolderOpen/>} {tab === 'Settings' && <FaCog/>} {tab}
+              {tab === 'Dashboard' && <FaUserGraduate/>} 
+              {tab === 'Tasks' && <FaTasks/>} 
+              {tab === 'AI Tools' && <FaRobot/>} 
+              {tab === 'Resources' && <FaFolderOpen/>} 
+              {tab === 'Settings' && <FaCog/>} 
+              {tab}
             </div>
           ))}
         </div>
@@ -253,14 +238,8 @@ const PortalDashboard = () => {
           {/* LOADING SKELETONS */}
           {loading ? (
             <div className="grid">
-              <div className="card">
-                <Skeleton height="30px" width="60%"/>
-                <Skeleton height="150px"/>
-              </div>
-              <div className="card">
-                <Skeleton height="30px" width="40%"/>
-                <Skeleton height="200px"/>
-              </div>
+              <div className="card"><Skeleton height="30px" width="60%"/><Skeleton height="150px"/></div>
+              <div className="card"><Skeleton height="30px" width="40%"/><Skeleton height="200px"/></div>
             </div>
           ) : (
             <>
@@ -283,12 +262,7 @@ const PortalDashboard = () => {
                       <select className="input" style={{marginBottom:15}} value={uploadStage} onChange={e=>setUploadStage(e.target.value)}><option value="">Select Stage</option><option>Proposal</option><option>Chapter 1</option><option>Final</option></select>
                       
                       {/* DRAG & DROP ZONE */}
-                      <div 
-                        className={`upload-zone ${isDragging ? 'drag-active' : ''}`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                      >
+                      <div className={`upload-zone ${isDragging ? 'drag-active' : ''}`} onDragOver={handleDragOver} onDragLeave={e=>{e.preventDefault(); setIsDragging(false)}} onDrop={handleDrop}>
                         <input type="file" id="file" style={{display:'none'}} onChange={e=>setFile(e.target.files[0])}/>
                         <label htmlFor="file" style={{cursor:'pointer', width:'100%', display:'block'}}>
                           <FaCloudUploadAlt size={40} color={isDragging ? "#3b82f6" : "#94a3b8"} style={{marginBottom:15}}/>
@@ -325,6 +299,39 @@ const PortalDashboard = () => {
                         ))}
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* --- NEW: AI TOOLS TAB --- */}
+              {activeTab === 'AI Tools' && (
+                <div className="grid">
+                  <div className="card">
+                    <div className="card-header"><FaMagic color="#a855f7"/> Smart Topic Generator</div>
+                    <p style={{color:'var(--text-light)', fontSize:14, marginBottom:15}}>Stuck on ideas? Enter your interest area and let AI suggest titles.</p>
+                    <div style={{display:'flex', gap:10, marginBottom:20}}>
+                      <input className="input" placeholder="e.g. Artificial Intelligence, Tourism..." value={aiKeyword} onChange={e=>setAiKeyword(e.target.value)}/>
+                      <button className="btn-primary" style={{width:'auto', padding:'0 25px'}} onClick={generateTopics} disabled={isGenerating}>{isGenerating ? "Thinking..." : "Generate"}</button>
+                    </div>
+                    {generatedTopics.map((t, i) => (
+                      <div key={i} className="ai-result" onClick={() => copyToClipboard(t)}>
+                        <div style={{fontWeight:600, fontSize:14}}>{t}</div>
+                        <div style={{fontSize:11, color:'var(--primary)', marginTop:5}}><FaCopy/> Click to Copy</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="card">
+                    <div className="card-header"><FaQuoteRight color="#10b981"/> APA Citation Builder</div>
+                    <p style={{color:'var(--text-light)', fontSize:14, marginBottom:15}}>Format your references instantly.</p>
+                    <input className="input" style={{marginBottom:10}} placeholder="Author (e.g. Smith, J.)" onChange={e=>setCitationData({...citationData, author:e.target.value})}/>
+                    <div style={{display:'flex', gap:10, marginBottom:10}}>
+                      <input className="input" placeholder="Year" onChange={e=>setCitationData({...citationData, year:e.target.value})}/>
+                      <input className="input" placeholder="Page Title" onChange={e=>setCitationData({...citationData, title:e.target.value})}/>
+                    </div>
+                    <input className="input" style={{marginBottom:15}} placeholder="URL" onChange={e=>setCitationData({...citationData, url:e.target.value})}/>
+                    <button className="btn-primary" onClick={generateCitation}>Format Citation</button>
+                    {generatedCitation && <div className="ai-result" onClick={() => copyToClipboard(generatedCitation)} style={{fontStyle:'italic', marginTop:20}}>"{generatedCitation}"</div>}
                   </div>
                 </div>
               )}

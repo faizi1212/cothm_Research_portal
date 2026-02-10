@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { 
   FaRocket, FaShieldAlt, FaChartLine, FaArrowRight, FaSignInAlt, FaUserPlus, 
-  FaUniversity, FaLaptopCode, FaGlobe, FaChalkboardTeacher, FaQuoteLeft 
+  FaUniversity, FaLaptopCode, FaGlobe, FaQuoteLeft 
 } from "react-icons/fa";
 import logo from "./logo.png"; 
 
@@ -11,6 +11,7 @@ const Home = () => {
     <div className="landing-page">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&display=swap');
         
         :root {
           --primary: #3b82f6;       
@@ -55,7 +56,21 @@ const Home = () => {
           position: sticky; top: 0; background: rgba(15, 23, 42, 0.85);
           backdrop-filter: blur(12px); z-index: 100; border-bottom: 1px solid var(--border);
         }
+        
+        /* Stylish Logo Text */
+        .logo-text {
+          font-family: 'Outfit', sans-serif;
+          font-weight: 800;
+          font-size: 22px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
         .logo-img { height: 40px; width: auto; }
+        
         .nav-link { color: var(--text-light); text-decoration: none; font-weight: 500; font-size: 14px; transition: 0.2s; }
         .nav-link:hover { color: white; }
         
@@ -163,7 +178,7 @@ const Home = () => {
       <nav className="navbar">
         <div style={{display:'flex', alignItems:'center', gap:12}}>
           <img src={logo} alt="COTHM Logo" className="logo-img" /> 
-          <span style={{fontWeight:800, fontSize:20, color:'white', letterSpacing:'-0.5px'}}>COTHM PORTAL</span>
+          <span className="logo-text">COTHM RESEARCH PORTAL</span>
         </div>
         <div style={{display:'flex', gap:25}} className="desktop-only">
           <a href="#features" className="nav-link">Features</a>
@@ -193,22 +208,10 @@ const Home = () => {
       {/* --- STATS COUNTER --- */}
       <section className="section" id="research">
         <div className="stats-grid">
-          <div>
-            <div className="stat-num">5,000+</div>
-            <div className="stat-label">Students Enrolled</div>
-          </div>
-          <div>
-            <div className="stat-num">1,200+</div>
-            <div className="stat-label">Research Papers</div>
-          </div>
-          <div>
-            <div className="stat-num">150+</div>
-            <div className="stat-label">Expert Faculty</div>
-          </div>
-          <div>
-            <div className="stat-num">25+</div>
-            <div className="stat-label">Global Partners</div>
-          </div>
+          <div><div className="stat-num">5,000+</div><div className="stat-label">Students Enrolled</div></div>
+          <div><div className="stat-num">1,200+</div><div className="stat-label">Research Papers</div></div>
+          <div><div className="stat-num">150+</div><div className="stat-label">Expert Faculty</div></div>
+          <div><div className="stat-num">25+</div><div className="stat-label">Global Partners</div></div>
         </div>
       </section>
 

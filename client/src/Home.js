@@ -2,7 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { 
   FaRocket, FaShieldAlt, FaChartLine, FaArrowRight, FaSignInAlt, FaUserPlus, 
-  FaUniversity, FaLaptopCode, FaGlobe, FaQuoteLeft 
+  FaUniversity, FaLaptopCode, FaGlobe, FaQuoteLeft, 
+  FaUtensils, FaAward, FaVideo, FaCertificate 
 } from "react-icons/fa";
 import logo from "./logo.png"; 
 
@@ -38,7 +39,6 @@ const Home = () => {
           background-size: 40px 40px;
         }
 
-        /* Aurora Glow */
         .glow-bg {
           position: absolute; width: 600px; height: 600px;
           background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
@@ -57,18 +57,11 @@ const Home = () => {
           backdrop-filter: blur(12px); z-index: 100; border-bottom: 1px solid var(--border);
         }
         
-        /* Stylish Logo Text */
         .logo-text {
-          font-family: 'Outfit', sans-serif;
-          font-weight: 800;
-          font-size: 22px;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-          background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 1px;
+          text-transform: uppercase; background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-
         .logo-img { height: 40px; width: auto; }
         
         .nav-link { color: var(--text-light); text-decoration: none; font-weight: 500; font-size: 14px; transition: 0.2s; }
@@ -119,7 +112,7 @@ const Home = () => {
         .section-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 15px; color: white; }
         .section-desc { color: var(--text-light); max-width: 600px; margin: 0 auto; line-height: 1.6; }
 
-        /* --- STATS GRID --- */
+        /* STATS */
         .stats-grid { 
           display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; 
           background: var(--card-bg); padding: 40px; border-radius: 20px; border: 1px solid var(--border);
@@ -128,7 +121,7 @@ const Home = () => {
         .stat-num { font-size: 3rem; font-weight: 800; color: white; margin-bottom: 5px; }
         .stat-label { color: var(--text-light); font-weight: 500; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* --- FEATURES / PROGRAMS --- */
+        /* CARDS */
         .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
         .feature-card { 
           background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border); 
@@ -140,17 +133,35 @@ const Home = () => {
           display: flex; align-items: center; justify-content: center; font-size: 26px; 
           color: var(--primary); margin-bottom: 25px; 
         }
-        
-        /* --- TESTIMONIALS --- */
-        .test-card {
-          background: transparent; border: 1px solid var(--border); padding: 30px; border-radius: 20px;
-        }
+
+        /* TESTIMONIALS */
+        .test-card { background: transparent; border: 1px solid var(--border); padding: 30px; border-radius: 20px; }
         .quote-icon { color: var(--primary); font-size: 24px; margin-bottom: 15px; opacity: 0.5; }
         .test-text { font-style: italic; color: var(--text-light); line-height: 1.6; margin-bottom: 20px; }
         .user-info { display: flex; align-items: center; gap: 12px; }
         .user-avatar { width: 40px; height: 40px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
 
-        /* --- CTA BANNER --- */
+        /* --- PARTNERS SECTION (NEW) --- */
+        .partners-section { 
+          text-align: center; padding: 60px 20px; border-top: 1px solid var(--border); background: #0b1120;
+        }
+        .partners-title { font-size: 14px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 40px; }
+        .partners-grid { 
+          display: flex; justify-content: center; align-items: center; gap: 60px; flex-wrap: wrap; opacity: 0.7; 
+        }
+        .partner-logo { 
+          display: flex; align-items: center; gap: 12px; 
+          font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 28px; 
+          color: #64748b; transition: 0.3s; cursor: pointer;
+        }
+        .partner-logo:hover { color: white; transform: scale(1.05); opacity: 1; }
+        
+        .p-typsy:hover { color: #f59e0b; }
+        .p-qualifi:hover { color: #06b6d4; }
+        .p-master:hover { color: #ef4444; }
+        .p-cth:hover { color: #8b5cf6; }
+
+        /* CTA */
         .cta-section {
           background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
           border-radius: 30px; padding: 60px; text-align: center; margin: 80px 20px;
@@ -158,7 +169,7 @@ const Home = () => {
         }
         .cta-bg-icon { position: absolute; font-size: 300px; color: white; opacity: 0.05; right: -50px; bottom: -50px; }
 
-        /* --- FOOTER --- */
+        /* FOOTER */
         .footer { border-top: 1px solid var(--border); padding: 50px 20px; background: #020617; text-align: center; }
         .footer-links { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; }
         .f-link { color: var(--text-light); text-decoration: none; transition: 0.2s; }
@@ -168,6 +179,7 @@ const Home = () => {
           .hero-title { font-size: 2.5rem; } 
           .navbar { padding: 15px 20px; flex-direction: column; gap: 15px; }
           .stats-grid { grid-template-columns: 1fr; }
+          .partners-grid { gap: 30px; flex-direction: column; }
         }
       `}</style>
 
@@ -205,7 +217,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* --- STATS COUNTER --- */}
+      {/* --- STATS --- */}
       <section className="section" id="research">
         <div className="stats-grid">
           <div><div className="stat-num">5,000+</div><div className="stat-label">Students Enrolled</div></div>
@@ -297,6 +309,17 @@ const Home = () => {
         <p style={{marginBottom:30, opacity:0.9, position:'relative'}}>Join thousands of students achieving academic excellence with COTHM.</p>
         <Link to="/signup" style={{background:'white', color:'#2563eb', padding:'15px 40px', borderRadius:50, textDecoration:'none', fontWeight:'bold', fontSize:18, position:'relative'}}>Apply Now</Link>
       </div>
+
+      {/* --- NEW PARTNERS SECTION --- */}
+      <section className="partners-section">
+        <div className="partners-title">Our Strategic Partners</div>
+        <div className="partners-grid">
+          <div className="partner-logo p-typsy"><FaVideo/> typsy</div>
+          <div className="partner-logo p-qualifi"><FaAward/> QUALIFI</div>
+          <div className="partner-logo p-master"><FaUtensils/> MasterChef</div>
+          <div className="partner-logo p-cth"><FaCertificate/> CTH UK</div>
+        </div>
+      </section>
 
       {/* --- FOOTER --- */}
       <footer className="footer">

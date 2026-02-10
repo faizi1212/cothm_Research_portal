@@ -4,16 +4,14 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
-// Import components - adjust these paths based on your actual folder structure
-// If your files are in src/components/, keep as is
-// If your files are directly in src/, change to './Login', './Signup', etc.
-
+// Import components
 import Login from './Login';
 import Signup from './Signup';
 import PortalDashboard from './PortalDashboard';
 import AdminDashboard from './AdminDashboard';
+import Home from './Home'; // <--- ADDED NEW HOME COMPONENT
 
-// Role Checker Component (embedded to avoid import issues)
+// Role Checker Component (Kept as requested)
 const RoleChecker = () => {
   const navigate = (path) => {
     window.location.href = path;
@@ -60,23 +58,24 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
+        {/* --- PUBLIC LANDING PAGE (NEW) --- */}
+        <Route path="/" element={<Home />} />
+
+        {/* Public Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        
-        {/* Student Dashboard */}
-        <Route path="/dashboard" element={<PortalDashboard />} />
-        
-        {/* Admin/Supervisor Dashboard */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        
-        {/* Root - Check role and redirect */}
-        <Route path="/" element={<RoleChecker />} />
-        
-        {/* Catch all - redirect to role checker */}
-        <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        
+        {/* Protected Dashboards */}
+        <Route path="/dashboard" element={<PortalDashboard />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        
+        {/* Utility Route: Explicit Auth Check (Optional usage) */}
+        <Route path="/auth-check" element={<RoleChecker />} />
+        
+        {/* Catch all - redirect to Home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

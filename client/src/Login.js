@@ -1,188 +1,137 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
-import logo from "./logo.png"; 
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaUniversity } from "react-icons/fa";
+import logo from "./logo.png"; // Ensure you have this logo
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState(null);
-  
   const navigate = useNavigate();
   const API_URL = "https://cothm-research-portal.onrender.com";
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(null);
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
-    if(!formData.email || !formData.password) {
-      setError("Please enter your credentials.");
-      return;
-    }
     setLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/auth/login`, formData);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      
-      const role = res.data.user.role;
-      navigate(role === "supervisor" || role === "admin" ? "/admin" : "/dashboard");
-    } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+      navigate(res.data.user.role === "supervisor" ? "/admin" : "/dashboard");
+    } catch (err) { setError(err.response?.data?.message || "Login failed"); } 
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="split-screen">
+    <div className="login-container">
       <style>{`
-        :root { --primary: #1e3c72; --gold: #d4af37; }
-        body { margin: 0; font-family: 'Inter', sans-serif; overflow: hidden; }
-
-        .split-screen { display: flex; height: 100vh; width: 100vw; }
-
-        /* LEFT SIDE - IMAGE & BRANDING */
-        .left-pane {
-          flex: 1;
-          background: linear-gradient(rgba(30, 60, 114, 0.9), rgba(42, 82, 152, 0.8)), 
-                      url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1920&auto=format&fit=crop');
-          background-size: cover;
-          background-position: center;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          padding: 60px;
-          color: white;
-          position: relative;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; margin: 0; background: #0f172a; }
         
-        .left-content { max-width: 500px; animation: slideRight 0.8s ease-out; }
-        .hero-title { font-size: 3rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
-        .hero-text { font-size: 1.1rem; opacity: 0.9; line-height: 1.6; }
-        .hero-gold { color: var(--gold); }
+        .login-container { display: flex; height: 100vh; width: 100vw; overflow: hidden; background: #0f172a; }
+        
+        /* LEFT SIDE - VISUAL */
+        .visual-side {
+          flex: 1.2;
+          background: linear-gradient(135deg, rgba(30, 60, 114, 0.9), rgba(42, 82, 152, 0.8)),
+                      url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1920');
+          background-size: cover; background-position: center;
+          display: flex; flex-direction: column; justify-content: center; padding: 80px;
+          color: white; position: relative;
+        }
+        .visual-content { position: relative; z-index: 2; max-width: 600px; animation: slideIn 0.8s ease-out; }
+        .hero-title { font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; letter-spacing: -1px; }
+        .hero-text { font-size: 1.2rem; opacity: 0.85; line-height: 1.6; font-weight: 400; }
+        .hero-gold { color: #d4af37; }
 
         /* RIGHT SIDE - FORM */
-        .right-pane {
-          flex: 1;
-          background: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 40px;
-          position: relative;
-        }
-
-        .login-wrapper { width: 100%; max-width: 400px; animation: fadeIn 1s ease-out; }
+        .form-side { flex: 1; background: #ffffff; display: flex; align-items: center; justify-content: center; padding: 40px; }
+        .form-wrapper { width: 100%; max-width: 420px; animation: fadeIn 1s ease-out; }
         
-        .brand-header { margin-bottom: 40px; }
-        .brand-logo { width: 80px; margin-bottom: 15px; }
-        .welcome-text { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0; }
-        .sub-text { color: #64748b; margin-top: 5px; }
+        .brand-header { margin-bottom: 40px; display: flex; flex-direction: column; gap: 10px; }
+        .logo-img { width: 80px; height: auto; margin-bottom: 10px; }
+        .welcome-title { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0; letter-spacing: -0.5px; }
+        .welcome-sub { color: #64748b; font-size: 15px; }
 
         /* INPUTS */
         .input-group { margin-bottom: 20px; position: relative; }
-        .input-label { display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; }
-        .form-input {
+        .label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-field {
           width: 100%; padding: 14px 14px 14px 45px;
-          border: 2px solid #e2e8f0; border-radius: 12px;
+          border: 1px solid #e2e8f0; border-radius: 12px;
           font-size: 15px; outline: none; transition: 0.2s;
-          box-sizing: border-box; color: #1e293b;
+          background: #f8fafc; color: #1e293b; box-sizing: border-box;
         }
-        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1); }
-        
-        .input-icon { position: absolute; left: 15px; bottom: 15px; color: #94a3b8; }
-        .password-toggle { position: absolute; right: 15px; bottom: 15px; color: #94a3b8; cursor: pointer; }
+        .input-field:focus { border-color: #1e3c72; background: #fff; box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1); }
+        .icon { position: absolute; left: 16px; bottom: 16px; color: #94a3b8; font-size: 18px; }
+        .toggle-pass { position: absolute; right: 16px; bottom: 16px; color: #94a3b8; cursor: pointer; }
 
         /* BUTTON */
-        .btn-login {
-          width: 100%; padding: 16px; background: var(--primary);
-          color: white; border: none; border-radius: 12px;
-          font-size: 16px; font-weight: 700; cursor: pointer;
-          transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+        .btn-primary {
+          width: 100%; padding: 16px; background: #1e3c72; color: white;
+          border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
+          cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+          margin-top: 10px;
         }
-        .btn-login:hover { background: #162c55; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(30, 60, 114, 0.2); }
-        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-primary:hover { background: #162c55; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(30, 60, 114, 0.3); }
+        .btn-primary:disabled { opacity: 0.7; cursor: wait; }
 
-        /* LINKS */
-        .action-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; font-size: 14px; }
-        .forgot-link { color: var(--primary); text-decoration: none; font-weight: 600; }
-        .signup-text { text-align: center; margin-top: 30px; color: #64748b; }
-        .signup-link { color: var(--primary); font-weight: 700; text-decoration: none; }
+        .links-row { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 14px; }
+        .link { color: #1e3c72; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+        .link:hover { color: #d4af37; }
+        
+        .error-banner { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; border-left: 4px solid #ef4444; }
 
-        .error-msg { background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; text-align: center; }
-
-        /* ANIMATIONS */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideRight { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
-
-        /* MOBILE */
-        @media (max-width: 900px) {
-          .left-pane { display: none; } /* Hide image on tablet/mobile */
-          .right-pane { background: #f8fafc; }
-          .login-wrapper { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        
+        @media (max-width: 900px) { .visual-side { display: none; } .form-side { background: #f8fafc; } .form-wrapper { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); } }
       `}</style>
 
-      {/* LEFT SIDE (Branding) */}
-      <div className="left-pane">
-        <div className="left-content">
-          <h1 className="hero-title">Welcome to <br/> <span className="hero-gold">COTHM</span> Portal</h1>
-          <p className="hero-text">
-            Streamline your research journey. Submit theses, track approvals, and access academic resources in one secure platform.
-          </p>
+      <div className="visual-side">
+        <div className="visual-content">
+          <h1 className="hero-title">Academic <br/>Excellence <span className="hero-gold">Redefined.</span></h1>
+          <p className="hero-text">Access the COTHM Research Portal to manage theses, collaborate with supervisors, and track your academic progress.</p>
         </div>
       </div>
 
-      {/* RIGHT SIDE (Form) */}
-      <div className="right-pane">
-        <div className="login-wrapper">
+      <div className="form-side">
+        <div className="form-wrapper">
           <div className="brand-header">
-            <img src={logo} alt="Logo" className="brand-logo" />
-            <h2 className="welcome-text">Student Login</h2>
-            <p className="sub-text">Please enter your details to continue.</p>
+            <img src={logo} alt="COTHM" className="logo-img" />
+            <div>
+              <h2 className="welcome-title">Welcome back</h2>
+              <p className="welcome-sub">Please enter your details to sign in.</p>
+            </div>
           </div>
 
+          {error && <div className="error-banner">{error}</div>}
+
           <form onSubmit={handleLogin}>
-            {error && <div className="error-msg">{error}</div>}
-
             <div className="input-group">
-              <label className="input-label">Email Address</label>
-              <input 
-                type="email" name="email" className="form-input" 
-                placeholder="student@cothm.edu.pk" 
-                value={formData.email} onChange={handleChange} required 
-              />
-              <FaEnvelope className="input-icon" />
+              <label className="label">Email Address</label>
+              <input className="input-field" type="email" placeholder="student@cothm.edu.pk" value={formData.email} onChange={e=>setFormData({...formData, email:e.target.value})} required />
+              <FaEnvelope className="icon" />
             </div>
 
             <div className="input-group">
-              <label className="input-label">Password</label>
-              <input 
-                type={showPassword ? "text" : "password"} name="password" className="form-input" 
-                placeholder="••••••••" 
-                value={formData.password} onChange={handleChange} required 
-              />
-              <FaLock className="input-icon" />
-              <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </div>
+              <label className="label">Password</label>
+              <input className="input-field" type={showPass ? "text" : "password"} placeholder="••••••••" value={formData.password} onChange={e=>setFormData({...formData, password:e.target.value})} required />
+              <FaLock className="icon" />
+              <span className="toggle-pass" onClick={() => setShowPass(!showPass)}>{showPass ? <FaEyeSlash/> : <FaEye/>}</span>
             </div>
 
-            <div className="action-row">
-              <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
+            <div className="links-row">
+              <Link to="/forgot-password" class="link">Forgot Password?</Link>
             </div>
 
-            <button type="submit" className="btn-login" disabled={loading}>
-              {loading ? "Verifying..." : <>Login <FaArrowRight /></>}
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? "Authenticating..." : <>Sign In <FaArrowRight/></>}
             </button>
 
-            <p className="signup-text">
-              Don't have an account? <Link to="/signup" className="signup-link">Register Now</Link>
+            <p style={{textAlign:'center', marginTop:30, color:'#64748b', fontSize:14}}>
+              Don't have an account? <Link to="/signup" className="link">Create account</Link>
             </p>
           </form>
         </div>

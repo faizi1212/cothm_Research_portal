@@ -2,455 +2,463 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { 
   FaFileUpload, FaCheckCircle, FaExclamationCircle, FaClock, 
-  FaCommentDots, FaFilePdf, FaSignOutAlt, FaUserGraduate, 
-  FaBars, FaTimes, FaCloudUploadAlt, FaHistory, FaChevronRight,
-  FaBullhorn, FaFolderOpen, FaDownload, FaCalendarCheck
+  FaUserGraduate, FaBars, FaTimes, FaCloudUploadAlt, FaHistory, 
+  FaBullhorn, FaFolderOpen, FaDownload, FaCalendarCheck, FaCog, FaBell, FaSignOutAlt
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const PortalDashboard = () => {
   // --- STATE ---
   const [activeTab, setActiveTab] = useState("Dashboard");
-  const [data, setData] = useState({ 
-    project: null, 
-    announcements: [], 
-    resources: [], 
-    deadline: null 
-  });
+  const [data, setData] = useState({ project: null, announcements: [], resources: [], deadline: null, notifications: [] });
   const [daysLeft, setDaysLeft] = useState(null);
-  const [loading, setLoading] = useState(false);
+  
+  // Upload State
   const [file, setFile] = useState(null);
   const [uploadStage, setUploadStage] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  // UI State
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [toast, setToast] = useState(null);
+  const [showNotif, setShowNotif] = useState(false);
   
+  // Profile Settings State
+  const [profile, setProfile] = useState({ firstName: "", lastName: "", password: "" });
+
   const API_URL = "https://cothm-research-portal.onrender.com";
-  
-  const user = JSON.parse(localStorage.getItem("user")) || { 
-    firstName: "Student", lastName: "", email: "", batchNumber: "N/A" 
-  };
-  
+  const user = JSON.parse(localStorage.getItem("user")) || { firstName: "Student", lastName: "" };
   const navigate = useNavigate();
 
-  // --- EFFECTS ---
+  // --- INITIAL LOAD ---
   useEffect(() => { 
     if(!user.email) navigate("/login");
+    
+    // Set initial profile state
+    setProfile({ firstName: user.firstName, lastName: user.lastName, password: "" });
+    
     fetchAllData(); 
-    if (window.innerWidth < 768) setSidebarOpen(false);
+    if (window.innerWidth < 1024) setSidebarOpen(false);
   }, []);
 
   const fetchAllData = async () => {
     try {
-      const [pRes, aRes, rRes, sRes] = await Promise.all([
+      const [p, a, r, s, n] = await Promise.all([
         axios.get(`${API_URL}/api/projects/my-projects?email=${user.email}`),
         axios.get(`${API_URL}/api/announcements`),
         axios.get(`${API_URL}/api/resources`),
-        axios.get(`${API_URL}/api/settings`)
+        axios.get(`${API_URL}/api/settings`),
+        axios.get(`${API_URL}/api/notifications?email=${user.email}`)
       ]);
 
-      let deadlineDate = sRes.data.deadline ? new Date(sRes.data.deadline) : null;
-      if (deadlineDate) {
-        const diff = Math.ceil((deadlineDate - new Date()) / (1000 * 60 * 60 * 24));
-        setDaysLeft(diff);
+      // Calculate Deadline
+      if (s.data.deadline) {
+        setDaysLeft(Math.ceil((new Date(s.data.deadline) - new Date()) / (1000 * 60 * 60 * 24)));
       }
 
       setData({
-        project: pRes.data[0] || null,
-        announcements: aRes.data || [],
-        resources: rRes.data || [],
-        deadline: deadlineDate
+        project: p.data[0] || null,
+        announcements: a.data,
+        resources: r.data,
+        deadline: s.data.deadline ? new Date(s.data.deadline) : null,
+        notifications: n.data
       });
-
-    } catch (err) { console.error("Error fetching data", err); }
+    } catch (err) { console.error("Error loading data", err); }
   };
 
-  const showToast = (msg, type='success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleFileChange = (e) => setFile(e.target.files[0]);
-
+  // --- ACTIONS ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file || !uploadStage) {
-      showToast("Please select both a file and a stage", "error");
-      return;
-    }
+    if (!file || !uploadStage) return alert("Please select a file and stage.");
     
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("studentEmail", user.email);
-      formData.append("studentName", `${user.firstName} ${user.lastName}`);
-      formData.append("stage", uploadStage);
-      formData.append("batchNumber", user.batchNumber);
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("studentEmail", user.email);
+      fd.append("studentName", `${user.firstName} ${user.lastName}`);
+      fd.append("stage", uploadStage);
+      fd.append("batchNumber", user.batchNumber);
       
-      await axios.post(`${API_URL}/api/submit`, formData);
-      
-      showToast("Submission Uploaded Successfully!");
+      await axios.post(`${API_URL}/api/submit`, fd);
+      alert("✅ Submitted Successfully!");
       setFile(null); 
       setUploadStage(""); 
       fetchAllData();
-    } catch (err) { 
-      showToast("Upload Failed. Please try again.", "error");
-    } finally { 
-      setLoading(false); 
-    }
+    } catch (err) { alert("Upload Failed."); } 
+    finally { setLoading(false); }
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.put(`${API_URL}/api/auth/update-profile`, { 
+        email: user.email, 
+        firstName: profile.firstName, 
+        lastName: profile.lastName, 
+        password: profile.password 
+      });
+      // Update local storage
+      localStorage.setItem("user", JSON.stringify({ ...user, firstName: res.data.user.firstName, lastName: res.data.user.lastName }));
+      alert("✅ Profile Updated Successfully!");
+      setProfile({...profile, password: ""}); // Clear password field
+    } catch(err) { alert("Update Failed"); }
   };
 
   const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
 
+  // Helper for Status Colors
   const getStatusColor = (status) => {
     switch(status) {
-      case 'Approved': return { bg: '#dcfce7', text: '#166534', icon: <FaCheckCircle size={24}/> };
-      case 'Rejected': return { bg: '#fee2e2', text: '#991b1b', icon: <FaExclamationCircle size={24}/> };
-      default: return { bg: '#fef3c7', text: '#92400e', icon: <FaClock size={24}/> };
+      case 'Approved': return { bg: '#dcfce7', text: '#166534', icon: <FaCheckCircle/> };
+      case 'Rejected': return { bg: '#fee2e2', text: '#991b1b', icon: <FaExclamationCircle/> };
+      default: return { bg: '#fef3c7', text: '#92400e', icon: <FaClock/> };
     }
   };
-
-  const statusStyle = data.project ? getStatusColor(data.project.status) : {};
+  const statusStyle = data.project ? getStatusColor(data.project.status) : { bg: '#f1f5f9', text: '#64748b', icon: <FaClock/> };
 
   return (
     <div className="portal-layout">
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
         :root {
           --primary: #1e3c72;
-          --primary-dark: #102a56;
-          --accent: #2a5298;
-          --bg: #f3f4f6;
+          --bg: #f1f5f9;
+          --sidebar: #0f172a;
           --surface: #ffffff;
           --text: #1e293b;
-          --text-light: #64748b;
           --border: #e2e8f0;
-          --success: #10b981;
-          --danger: #ef4444;
-          --warning: #f59e0b;
         }
         
-        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
-        .portal-layout { display: flex; min-height: 100vh; position: relative; overflow-x: hidden; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+        .portal-layout { display: flex; min-height: 100vh; overflow-x: hidden; }
         
-        /* --- SIDEBAR FIXED LAYOUT (FLAT FLEX) --- */
+        /* SIDEBAR */
         .sidebar {
-          background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-          color: white; 
-          width: 260px; 
-          height: 100vh; 
-          position: fixed; 
-          top: 0; 
-          left: 0; 
+          width: 260px;
+          background: var(--sidebar);
+          color: white;
+          position: fixed;
+          height: 100vh;
           z-index: 50;
-          transition: transform 0.3s ease; 
-          
-          /* CRITICAL LAYOUT RULES */
-          display: flex; 
-          flex-direction: column; 
+          display: flex;
+          flex-direction: column;
+          padding: 20px;
+          box-sizing: border-box;
+          transition: transform 0.3s ease;
         }
         .sidebar.closed { transform: translateX(-100%); }
         
-        /* 1. HEADER (Fixed height) */
-        .sidebar-header { 
-          padding: 25px; 
-          display: flex; 
-          align-items: center; 
-          gap: 12px; 
-          border-bottom: 1px solid rgba(255,255,255,0.1); 
-          flex-shrink: 0; 
+        .logo-area {
+          display: flex; align-items: center; gap: 12px;
+          padding-bottom: 20px; margin-bottom: 20px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .sidebar-title { font-weight: 700; font-size: 20px; margin: 0; letter-spacing: 0.5px; }
-
-        /* 2. NAV LINKS (Fills remaining space) */
-        .nav-links { 
-          padding: 20px; 
-          flex-grow: 1; /* EXPANDS TO PUSH FOOTER DOWN */
-          overflow-y: auto; 
+        .logo-icon {
+          width: 40px; height: 40px; background: #3b82f6;
+          border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px;
         }
-        .nav-item { 
-          padding: 12px 16px; 
-          border-radius: 10px; 
-          cursor: pointer; 
-          transition: all 0.2s; 
-          margin-bottom: 8px; 
-          color: rgba(255,255,255,0.8); 
-          font-weight: 500; 
-          display: flex; 
-          align-items: center; 
-          gap: 12px; 
+        
+        .nav-links { flex: 1; }
+        .nav-item {
+          display: flex; align-items: center; gap: 12px;
+          padding: 12px 15px; border-radius: 8px;
+          color: #cbd5e1; cursor: pointer; transition: 0.2s;
+          margin-bottom: 5px; font-weight: 500;
         }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; transform: translateX(5px); }
-
-        /* 3. FOOTER (Pinned to bottom) */
-        .sidebar-footer { 
-          padding: 20px; 
-          border-top: 1px solid rgba(255,255,255,0.1); 
-          flex-shrink: 0; 
-          background: rgba(0,0,0,0.1); 
-          margin-top: auto; /* SAFETY: Forces bottom alignment */
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #3b82f6; }
+        
+        .logout-btn {
+          margin-top: auto; padding: 12px;
+          background: rgba(239, 68, 68, 0.15); color: #fca5a5;
+          border-radius: 8px; cursor: pointer; text-align: center;
+          font-weight: 600; transition: 0.2s; display: flex; justify-content: center; gap: 8px; align-items: center;
         }
-        .logout-btn { 
-          width: 100%; 
-          padding: 12px; 
-          background: rgba(239, 68, 68, 0.15); 
-          color: #fca5a5; 
-          border: 1px solid rgba(239, 68, 68, 0.2); 
-          border-radius: 8px; 
-          cursor: pointer; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          gap: 8px; 
-          font-weight: 600; 
-          transition: all 0.2s; 
-        }
-        .logout-btn:hover { background: rgba(239, 68, 68, 0.3); color: white; border-color: rgba(239, 68, 68, 0.5); }
+        .logout-btn:hover { background: rgba(239, 68, 68, 0.25); color: white; }
 
         /* MAIN CONTENT */
-        .main-wrapper { flex: 1; margin-left: 260px; transition: margin 0.3s ease; width: 100%; }
+        .main-wrapper { flex: 1; margin-left: 260px; transition: margin 0.3s ease; width: 100%; display: flex; flex-direction: column; }
         .main-wrapper.full { margin-left: 0; }
         
         /* NAVBAR */
-        .navbar { background: var(--surface); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 15px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 40; }
-        .menu-btn { cursor: pointer; color: var(--text-light); }
-        .user-profile { display: flex; align-items: center; gap: 15px; }
-        .user-info { text-align: right; line-height: 1.2; }
-        .user-name { font-weight: 600; font-size: 14px; color: var(--text); display: block; }
-        .user-batch { font-size: 11px; color: var(--text-light); background: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 2px; }
-        .user-avatar { width: 38px; height: 38px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .navbar {
+          background: var(--surface);
+          padding: 15px 30px;
+          display: flex; justify-content: space-between; align-items: center;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+          position: sticky; top: 0; z-index: 40;
+        }
         
-        /* CONTENT */
-        .content { padding: 30px; max-width: 1200px; margin: 0 auto; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
+        .bell-container { position: relative; cursor: pointer; margin-right: 20px; }
+        .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; border: 2px solid white; }
         
-        /* CARDS & UI COMPONENTS */
-        .card { background: var(--surface); border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 25px; }
-        .card-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        
-        .deadline-box { background: #fff7ed; color: #c2410c; padding: 15px 20px; border-radius: 12px; font-weight: 600; text-align: center; margin-bottom: 25px; border: 1px solid #ffedd5; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .announcement-item { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
-        .resource-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border); transition: 0.2s; }
-        .resource-item:hover { background: white; border-color: var(--primary); }
+        .dropdown {
+          position: absolute; top: 50px; right: 0; width: 300px;
+          background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+          border: 1px solid var(--border); overflow: hidden; z-index: 100;
+        }
+        .notif-item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #334155; }
+        .notif-item:last-child { border: none; }
+        .notif-time { font-size: 11px; color: #94a3b8; display: block; margin-top: 4px; }
 
-        .upload-container { position: relative; width: 100%; margin-top: 15px; }
-        .hidden-input { display: none !important; }
-        .upload-label { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; background: #f8fafc; cursor: pointer; transition: all 0.2s; width: 100%; box-sizing: border-box; }
-        .upload-label:hover { border-color: var(--primary); background: #f1f5f9; }
-        .upload-label.active { border-color: var(--success); background: #ecfdf5; }
-        .btn-submit { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; margin-top: 20px; cursor: pointer; }
-        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+        /* CONTENT */
+        .content { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .page-title { font-size: 24px; font-weight: 700; margin-bottom: 5px; color: #0f172a; }
+        .page-sub { color: #64748b; margin-bottom: 30px; font-size: 14px; }
+
+        /* CARDS */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
+        .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .card-header { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #334155; }
         
-        .status-hero { padding: 25px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .status-value { font-size: 24px; font-weight: 800; margin-top: 5px; }
-        .feedback-box { background: #f8fafc; border-left: 4px solid var(--primary); padding: 15px; border-radius: 8px; margin-top: 20px; }
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 10px; margin-bottom: 10px; }
-        .btn-view { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; color: var(--text); text-decoration: none; font-size: 12px; font-weight: 600; }
+        /* STATUS */
+        .status-box { padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 20px; }
+        .status-val { font-size: 24px; font-weight: 800; margin-top: 8px; }
         
-        .toast { position: fixed; bottom: 20px; right: 20px; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; z-index: 100; border-left: 4px solid var(--success); }
-        .toast.error { border-left-color: var(--danger); }
-        
-        @media (max-width: 768px) { .main-wrapper { margin-left: 0; } .sidebar { position: fixed; } }
+        /* UPLOAD */
+        .upload-zone {
+          border: 2px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center;
+          background: #f8fafc; cursor: pointer; transition: 0.2s; margin-bottom: 15px;
+        }
+        .upload-zone:hover { border-color: var(--primary); background: #f1f5f9; }
+        .btn-primary { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-primary:disabled { opacity: 0.7; }
+
+        /* LISTS */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+        .list-item:last-child { border: none; }
+        .announcement { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+
+        /* FORMS */
+        .input-group { margin-bottom: 15px; }
+        .label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #475569; }
+        .input { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; }
+
+        @media (max-width: 1024px) { .sidebar { position: fixed; } .main-wrapper { margin-left: 0; } }
       `}</style>
 
-      {/* --- SIDEBAR (FLAT STRUCTURE) --- */}
+      {/* --- SIDEBAR --- */}
       <div className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
-        
-        {/* 1. HEADER */}
-        <div className="sidebar-header">
-          <FaUserGraduate size={28} />
-          <h1 className="sidebar-title">COTHM</h1>
+        <div className="logo-area">
+          <div className="logo-icon"><FaUserGraduate/></div>
+          <div><h3 style={{margin:0, fontSize:18}}>COTHM</h3><span style={{fontSize:12, opacity:0.7}}>Student Portal</span></div>
         </div>
         
-        {/* 2. NAV LINKS (MIDDLE - Grows to fill space) */}
         <div className="nav-links">
-          <div 
-            className={`nav-item ${activeTab === 'Dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('Dashboard')}
-          >
-            <FaUserGraduate /> Dashboard
-          </div>
-          <div 
-            className={`nav-item ${activeTab === 'Resources' ? 'active' : ''}`}
-            onClick={() => setActiveTab('Resources')}
-          >
-            <FaFolderOpen /> Resources
-          </div>
+          {['Dashboard', 'Resources', 'Settings'].map(tab => (
+            <div 
+              key={tab} 
+              className={`nav-item ${activeTab === tab ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'Dashboard' && <FaUserGraduate/>}
+              {tab === 'Resources' && <FaFolderOpen/>}
+              {tab === 'Settings' && <FaCog/>}
+              {tab}
+            </div>
+          ))}
         </div>
 
-        {/* 3. FOOTER (BOTTOM - Pushed down) */}
-        <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
-            <FaSignOutAlt /> Logout
-          </button>
+        <div className="logout-btn" onClick={handleLogout}>
+          <FaSignOutAlt/> Logout
         </div>
       </div>
 
       {/* --- MAIN CONTENT --- */}
       <div className={`main-wrapper ${isSidebarOpen ? '' : 'full'}`}>
         
+        {/* Top Navbar */}
         <div className="navbar">
-          <div className="menu-btn" onClick={() => setSidebarOpen(!isSidebarOpen)}>
+          <div style={{cursor:'pointer', color:'#64748b'}} onClick={() => setSidebarOpen(!isSidebarOpen)}>
             {isSidebarOpen ? <FaTimes size={20}/> : <FaBars size={20}/>}
           </div>
-          <div className="user-profile">
-            <div className="user-info">
-              <span className="user-name">{user.firstName} {user.lastName}</span>
-              <span className="user-batch">Batch: {user.batchNumber || "N/A"}</span>
+          
+          <div style={{display:'flex', alignItems:'center'}}>
+            {/* Notification Bell */}
+            <div className="bell-container" onClick={() => setShowNotif(!showNotif)}>
+              <FaBell size={20} color="#64748b"/>
+              {data.notifications.filter(n => !n.read).length > 0 && 
+                <span className="badge">{data.notifications.filter(n => !n.read).length}</span>
+              }
+              {/* Dropdown */}
+              {showNotif && (
+                <div className="dropdown">
+                  <div style={{padding:'15px', fontWeight:'700', background:'#f8fafc', borderBottom:'1px solid #e2e8f0'}}>Notifications</div>
+                  {data.notifications.length === 0 ? <div style={{padding:20, textAlign:'center', color:'#94a3b8'}}>No notifications</div> :
+                    data.notifications.map((n, i) => (
+                      <div key={i} className="notif-item">
+                        <div>{n.message}</div>
+                        <span className="notif-time">{new Date(n.date).toLocaleDateString()}</span>
+                      </div>
+                    ))
+                  }
+                </div>
+              )}
             </div>
-            <div className="user-avatar">{user.firstName?.charAt(0)}</div>
+
+            {/* Profile Info */}
+            <div style={{textAlign:'right', marginRight:15}}>
+              <div style={{fontWeight:'600', fontSize:14}}>{user.firstName} {user.lastName}</div>
+              <div style={{fontSize:11, color:'#64748b'}}>Batch {user.batchNumber || "N/A"}</div>
+            </div>
+            <div style={{width:40, height:40, background:'#3b82f6', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:'700'}}>
+              {user.firstName.charAt(0)}
+            </div>
           </div>
         </div>
 
+        {/* Page Content */}
         <div className="content">
-          <div className="page-header">
-            <h2 className="page-title">{activeTab === 'Dashboard' ? 'Research Dashboard' : 'Resource Library'}</h2>
-            <p className="page-subtitle">
-              {activeTab === 'Dashboard' ? 'Track progress, submit work, and view announcements.' : 'Download templates and guidelines.'}
-            </p>
-          </div>
-
+          
+          {/* DEADLINE BANNER */}
           {daysLeft !== null && daysLeft > 0 && (
-            <div className="deadline-box">
-              <FaCalendarCheck /> 
-              <span>Final Submission Deadline: {daysLeft} Days Remaining ({data.deadline?.toLocaleDateString()})</span>
+            <div style={{background:'#fff7ed', border:'1px solid #ffedd5', color:'#c2410c', padding:15, borderRadius:12, marginBottom:25, display:'flex', alignItems:'center', gap:10, fontWeight:'600'}}>
+              <FaCalendarCheck/> Final Submission Deadline: {daysLeft} Days Remaining ({data.deadline?.toLocaleDateString()})
             </div>
           )}
 
-          {activeTab === 'Dashboard' ? (
+          {/* === DASHBOARD TAB === */}
+          {activeTab === 'Dashboard' && (
             <div className="grid">
               
+              {/* Left Column */}
               <div>
-                {/* ANNOUNCEMENTS */}
-                <div className="card">
-                  <div className="card-title"><FaBullhorn color="#1e3c72"/> Announcements</div>
-                  {data.announcements.length === 0 ? <p style={{color:'#94a3b8', fontSize:14}}>No updates yet.</p> : 
+                <div className="card" style={{marginBottom:25}}>
+                  <div className="card-header"><FaBullhorn color="#1e3c72"/> Announcements</div>
+                  {data.announcements.length === 0 ? <p style={{color:'#94a3b8'}}>No updates yet.</p> :
                     data.announcements.map(a => (
-                      <div key={a._id} className="announcement-item">
+                      <div key={a._id} className="announcement">
                         <strong style={{color:'#1e3c72'}}>{a.title}</strong>
-                        <p style={{margin:'5px 0', fontSize:14, color:'#334155'}}>{a.message}</p>
-                        <small style={{color:'#64748b', fontSize:12}}>{new Date(a.date).toLocaleDateString()}</small>
+                        <p style={{margin:'5px 0', fontSize:14}}>{a.message}</p>
+                        <span style={{fontSize:11, color:'#64748b'}}>{new Date(a.date).toLocaleDateString()}</span>
                       </div>
                     ))
                   }
                 </div>
 
-                {/* PROJECT STATUS */}
                 <div className="card">
-                  <div className="card-title"><FaClock color="#1e3c72"/> Project Status</div>
+                  <div className="card-header"><FaClock color="#1e3c72"/> Project Status</div>
                   {data.project ? (
                     <>
-                      <div className="status-hero" style={{ background: statusStyle.bg, color: statusStyle.text }}>
-                        <div>{statusStyle.icon}</div>
-                        <div className="status-value">{data.project.status}</div>
+                      <div className="status-box" style={{background: statusStyle.bg, color: statusStyle.text}}>
+                        {statusStyle.icon}
+                        <div className="status-val">{data.project.status}</div>
                       </div>
                       {data.project.feedback && (
-                        <div className="feedback-box">
-                          <div style={{fontWeight:700, marginBottom:5, color:'var(--primary)'}}>Supervisor Feedback:</div>
-                          <div style={{fontStyle:'italic'}}>"{data.project.feedback}"</div>
+                        <div style={{background:'#f8fafc', padding:15, borderRadius:8, borderLeft:'4px solid #1e3c72'}}>
+                          <div style={{fontWeight:700, fontSize:12, color:'#1e3c72', marginBottom:5}}>FEEDBACK</div>
+                          <div style={{fontStyle:'italic', color:'#334155'}}>{data.project.feedback}</div>
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="status-hero" style={{background: '#f1f5f9', color: '#64748b'}}>
+                    <div className="status-box" style={{background:'#f1f5f9', color:'#64748b'}}>
                       <div>Not Started</div>
-                      <div style={{fontSize:14, marginTop:5}}>No active project found.</div>
                     </div>
                   )}
                 </div>
               </div>
 
+              {/* Right Column */}
               <div>
-                {/* UPLOAD CARD */}
                 <div className="card">
-                  <div className="card-title"><FaCloudUploadAlt color="#1e3c72"/> New Submission</div>
-                  
+                  <div className="card-header"><FaCloudUploadAlt color="#1e3c72"/> Submit Work</div>
                   <form onSubmit={handleSubmit}>
-                    <div style={{marginBottom: 20}}>
-                      <label style={{display:'block', marginBottom:8, fontSize:14, fontWeight:600}}>Select Stage</label>
-                      <select 
-                        style={{width:'100%', padding:12, borderRadius:10, border:'1px solid var(--border)'}}
-                        value={uploadStage} 
-                        onChange={(e) => setUploadStage(e.target.value)} 
-                      >
-                        <option value="">-- Choose Stage --</option>
-                        <option value="Proposal">Topic Proposal</option>
-                        <option value="Chapter 1">Chapter 1</option>
-                        <option value="Mid-Term">Mid-Term Report</option>
-                        <option value="Final Thesis">Final Thesis</option>
+                    <div style={{marginBottom:15}}>
+                      <label className="label">Submission Stage</label>
+                      <select className="input" value={uploadStage} onChange={e=>setUploadStage(e.target.value)}>
+                        <option value="">Select Stage</option><option>Proposal</option><option>Chapter 1</option><option>Final Thesis</option>
                       </select>
                     </div>
-
-                    <div className="upload-container">
-                      <input type="file" id="file-upload" className="hidden-input" onChange={handleFileChange} accept=".pdf,.doc,.docx" />
-                      <label htmlFor="file-upload" className={`upload-label ${file ? 'active' : ''}`}>
-                        <div style={{marginBottom:10}}>
-                          {file ? <FaFilePdf size={32} color="#ef4444"/> : <FaCloudUploadAlt size={32} color="#64748b"/>}
-                        </div>
-                        <div style={{fontWeight:600, color:'var(--text)'}}>{file ? file.name : "Click here to upload document"}</div>
-                        <div style={{fontSize:12, color:'var(--text-light)'}}>{file ? "Ready to submit" : "PDF, DOC, DOCX (Max 10MB)"}</div>
+                    
+                    <div className="upload-zone">
+                      <input type="file" id="file" style={{display:'none'}} onChange={e=>setFile(e.target.files[0])}/>
+                      <label htmlFor="file" style={{cursor:'pointer', width:'100%', display:'block'}}>
+                        <FaCloudUploadAlt size={30} color="#94a3b8" style={{marginBottom:10}}/>
+                        <div style={{fontWeight:600}}>{file ? file.name : "Click to Upload File"}</div>
+                        <div style={{fontSize:12, color:'#94a3b8'}}>PDF, DOCX (Max 10MB)</div>
                       </label>
                     </div>
 
-                    <button type="submit" disabled={loading} className="btn-submit">
+                    <button type="submit" className="btn-primary" disabled={loading}>
                       {loading ? "Uploading..." : "Submit for Review"}
                     </button>
                   </form>
-                </div>
 
-                {/* HISTORY */}
-                {data.project?.submissions?.length > 0 && (
-                  <div className="card">
-                    <div className="card-title"><FaHistory color="#1e3c72"/> History</div>
-                    {data.project.submissions.slice().reverse().map((sub, i) => (
-                      <div key={i} className="history-item">
-                        <div style={{display:'flex', alignItems:'center', gap:10}}>
-                          <FaFilePdf color="#ef4444"/>
-                          <div>
-                            <div style={{fontWeight:600, fontSize:14}}>{sub.stage}</div>
-                            <div style={{fontSize:11, color:'#94a3b8'}}>{new Date(sub.date).toLocaleDateString()}</div>
+                  {data.project?.submissions?.length > 0 && (
+                    <div style={{marginTop:30}}>
+                      <div className="card-header" style={{fontSize:16}}><FaHistory/> Submission History</div>
+                      {data.project.submissions.slice().reverse().map((s, i) => (
+                        <div key={i} className="list-item">
+                          <div style={{display:'flex', gap:10, alignItems:'center'}}>
+                            <FaCheckCircle color="#10b981"/>
+                            <div>
+                              <div style={{fontWeight:600, fontSize:14}}>{s.stage}</div>
+                              <div style={{fontSize:11, color:'#94a3b8'}}>{new Date(s.date).toLocaleDateString()}</div>
+                            </div>
                           </div>
+                          <a href={s.fileUrl} target="_blank" rel="noreferrer" style={{color:'#3b82f6', textDecoration:'none', fontWeight:600, fontSize:13}}>View</a>
                         </div>
-                        <a href={sub.fileUrl} target="_blank" rel="noreferrer" className="btn-view">View</a>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="grid">
-              <div className="card" style={{gridColumn: '1 / -1'}}>
-                <div className="card-title"><FaFolderOpen color="#1e3c72"/> Document Library</div>
-                {data.resources.length === 0 ? <p style={{color:'#64748b', padding:20, textAlign:'center'}}>No resources uploaded yet.</p> : (
-                  <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:20}}>
-                    {data.resources.map(r => (
-                      <div key={r._id} className="resource-item">
-                        <div style={{display:'flex', alignItems:'center', gap:15}}>
-                          <FaFilePdf size={24} color="#e11d48"/> 
-                          <div>
-                            <strong style={{display:'block', color:'#1e293b'}}>{r.title}</strong>
-                            <span style={{fontSize:11, background:'#f1f5f9', padding:'2px 8px', borderRadius:10, color:'#475569'}}>{r.category}</span>
-                          </div>
-                        </div>
-                        <a href={r.fileUrl} target="_blank" rel="noreferrer" className="btn-view" style={{display:'flex', alignItems:'center', gap:5}}>
-                          <FaDownload/> Download
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
+
+          {/* === RESOURCES TAB === */}
+          {activeTab === 'Resources' && (
+            <div className="card">
+              <div className="card-header"><FaFolderOpen color="#1e3c72"/> Document Library</div>
+              <div className="grid">
+                {data.resources.length === 0 ? <p style={{color:'#94a3b8'}}>No resources available.</p> : 
+                  data.resources.map(r => (
+                    <div key={r._id} style={{padding:15, border:'1px solid #e2e8f0', borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                      <div style={{display:'flex', gap:12, alignItems:'center'}}>
+                        <div style={{width:40, height:40, background:'#e0f2fe', color:'#0284c7', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center'}}><FaFilePdf/></div>
+                        <div>
+                          <div style={{fontWeight:700, color:'#334155'}}>{r.title}</div>
+                          <div style={{fontSize:11, background:'#f1f5f9', padding:'2px 6px', borderRadius:4, display:'inline-block'}}>{r.category}</div>
+                        </div>
+                      </div>
+                      <a href={r.fileUrl} target="_blank" rel="noreferrer" style={{padding:'8px 15px', background:'white', border:'1px solid #e2e8f0', borderRadius:6, color:'#334155', textDecoration:'none', fontWeight:600, fontSize:13, display:'flex', gap:6, alignItems:'center'}}>
+                        <FaDownload/> Download
+                      </a>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          )}
+
+          {/* === SETTINGS TAB === */}
+          {activeTab === 'Settings' && (
+            <div className="card" style={{maxWidth:600, margin:'0 auto'}}>
+              <div className="card-header"><FaCog color="#1e3c72"/> Profile Settings</div>
+              <form onSubmit={handleUpdateProfile}>
+                <div className="grid" style={{marginBottom:15}}>
+                  <div className="input-group">
+                    <label className="label">First Name</label>
+                    <input className="input" value={profile.firstName} onChange={e=>setProfile({...profile, firstName:e.target.value})}/>
+                  </div>
+                  <div className="input-group">
+                    <label className="label">Last Name</label>
+                    <input className="input" value={profile.lastName} onChange={e=>setProfile({...profile, lastName:e.target.value})}/>
+                  </div>
+                </div>
+                <div className="input-group" style={{marginBottom:25}}>
+                  <label className="label">New Password (Optional)</label>
+                  <input className="input" type="password" placeholder="Leave blank to keep current password" value={profile.password} onChange={e=>setProfile({...profile, password:e.target.value})}/>
+                </div>
+                <button className="btn-primary" style={{width:'auto', padding:'12px 25px'}}>Update Profile</button>
+              </form>
+            </div>
+          )}
+
         </div>
       </div>
-
-      {toast && (
-        <div className={`toast ${toast.type}`}>
-          {toast.type === 'success' ? <FaCheckCircle/> : <FaExclamationCircle/>}
-          {toast.msg}
-        </div>
-      )}
     </div>
   );
 };

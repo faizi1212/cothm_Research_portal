@@ -2,8 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { 
   FaRocket, FaShieldAlt, FaChartLine, FaArrowRight, FaSignInAlt, FaUserPlus, 
-  FaUniversity, FaLaptopCode, FaGlobe, FaQuoteLeft, 
-  FaUtensils, FaAward, FaVideo, FaCertificate 
+  FaUniversity, FaUtensils, FaGlobe, FaQuoteLeft, 
+  FaAward, FaVideo, FaCertificate, FaHotel, FaConciergeBell, FaWineGlassAlt, FaCookieBite
 } from "react-icons/fa";
 import logo from "./logo.png"; 
 
@@ -19,10 +19,10 @@ const Home = () => {
           --primary-dark: #2563eb;  
           --accent: #8b5cf6;        
           --bg: #0f172a;            /* Deep Navy */
-          --card-bg: #1e293b;       /* Lighter Navy */
+          --card-bg: rgba(30, 41, 59, 0.7); /* Translucent Navy */
           --text: #f1f5f9;          
           --text-light: #94a3b8;    
-          --border: #334155;        
+          --border: rgba(51, 65, 85, 0.5);        
         }
 
         body { 
@@ -34,307 +34,244 @@ const Home = () => {
         .landing-page {
           position: relative; width: 100%;
           background-image: 
-            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-          background-size: 40px 40px;
+            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+          background-size: 50px 50px;
         }
 
         .glow-bg {
-          position: absolute; width: 600px; height: 600px;
-          background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-          filter: blur(80px); top: -200px; left: -100px; z-index: -1;
-          animation: float 10s infinite alternate;
+          position: absolute; width: 800px; height: 800px;
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+          filter: blur(100px); top: -300px; left: -200px; z-index: -1;
+          animation: float 15s infinite alternate;
         }
 
-        @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, 30px); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- NAVBAR --- */
         .navbar {
           display: flex; justify-content: space-between; align-items: center; 
-          padding: 20px 40px; max-width: 1200px; margin: 0 auto;
-          position: sticky; top: 0; background: rgba(15, 23, 42, 0.85);
-          backdrop-filter: blur(12px); z-index: 100; border-bottom: 1px solid var(--border);
+          padding: 20px 40px; max-width: 1300px; margin: 0 auto;
+          position: sticky; top: 0; background: rgba(15, 23, 42, 0.8);
+          backdrop-filter: blur(15px); z-index: 100; border-bottom: 1px solid var(--border);
         }
         
         .logo-text {
-          font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 1px;
-          text-transform: uppercase; background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
+          font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 24px; letter-spacing: 1.5px;
+          text-transform: uppercase; background: linear-gradient(90deg, #ffffff 0%, #3b82f6 100%);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .logo-img { height: 40px; width: auto; }
+        .logo-img { height: 45px; width: auto; transition: transform 0.3s; }
+        .logo-img:hover { transform: rotate(-5deg) scale(1.1); }
         
-        .nav-link { color: var(--text-light); text-decoration: none; font-weight: 500; font-size: 14px; transition: 0.2s; }
-        .nav-link:hover { color: white; }
+        .nav-link { color: var(--text-light); text-decoration: none; font-weight: 500; font-size: 14px; transition: 0.3s; }
+        .nav-link:hover { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
         
         .nav-btn {
-          text-decoration: none; font-weight: 600; padding: 10px 24px; border-radius: 50px; 
-          font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 8px;
+          text-decoration: none; font-weight: 600; padding: 12px 28px; border-radius: 50px; 
+          font-size: 14px; transition: 0.4s; display: flex; align-items: center; gap: 8px;
         }
-        .login-btn { color: white; border: 1px solid var(--border); background: transparent; }
-        .login-btn:hover { background: rgba(255,255,255,0.05); border-color: white; }
-        .signup-btn { background: var(--primary); color: white; border: none; }
-        .signup-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .login-btn { color: white; border: 1px solid var(--border); background: rgba(255,255,255,0.03); }
+        .login-btn:hover { background: rgba(255,255,255,0.1); border-color: white; transform: translateY(-2px); }
+        .signup-btn { background: var(--primary); color: white; border: none; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+        .signup-btn:hover { background: var(--primary-dark); transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5); }
 
         /* --- HERO --- */
         .hero {
-          min-height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+          min-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
           text-align: center; padding: 60px 20px; position: relative;
         }
         .badge {
           background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa;
-          padding: 6px 16px; border-radius: 30px; font-size: 13px; font-weight: 600;
-          margin-bottom: 25px; animation: slideUp 0.6s ease-out;
+          padding: 8px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; text-transform: uppercase;
+          margin-bottom: 30px; animation: slideUp 0.6s ease-out; letter-spacing: 1px;
         }
         .hero-title {
-          font-size: 4rem; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 25px;
-          background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+          font-size: 4.5rem; font-weight: 800; letter-spacing: -3px; line-height: 1; margin-bottom: 25px;
+          background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           animation: slideUp 0.8s ease-out;
         }
         .hero-sub { 
-          font-size: 1.25rem; color: var(--text-light); max-width: 650px; margin: 0 auto 40px auto; 
-          line-height: 1.6; animation: slideUp 1s ease-out; 
+          font-size: 1.3rem; color: var(--text-light); max-width: 700px; margin: 0 auto 45px auto; 
+          line-height: 1.7; animation: slideUp 1s ease-out; font-weight: 400;
         }
-        .cta-group { display: flex; gap: 15px; justify-content: center; animation: slideUp 1.2s ease-out; }
+        .cta-group { display: flex; gap: 20px; justify-content: center; animation: slideUp 1.2s ease-out; }
         .hero-btn { 
-          padding: 16px 36px; border-radius: 12px; font-weight: 700; text-decoration: none; 
-          display: flex; align-items: center; gap: 10px; transition: 0.3s; font-size: 16px;
+          padding: 18px 40px; border-radius: 16px; font-weight: 700; text-decoration: none; 
+          display: flex; align-items: center; gap: 12px; transition: 0.4s; font-size: 17px;
         }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -5px rgba(59, 130, 246, 0.4); }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; }
-        .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: white; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 30px -10px var(--primary); }
+        .btn-primary:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 20px 40px -10px var(--primary); }
+        .btn-outline { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: white; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; transform: translateY(-3px); }
 
         /* --- SECTIONS --- */
-        .section { max-width: 1200px; margin: 0 auto; padding: 80px 20px; }
-        .section-header { text-align: center; margin-bottom: 60px; }
-        .section-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 15px; color: white; }
-        .section-desc { color: var(--text-light); max-width: 600px; margin: 0 auto; line-height: 1.6; }
+        .section { max-width: 1200px; margin: 0 auto; padding: 100px 20px; }
+        .section-header { text-align: center; margin-bottom: 70px; }
+        .section-title { font-size: 2.8rem; font-weight: 800; margin-bottom: 20px; color: white; letter-spacing: -1px; }
+        .section-desc { color: var(--text-light); max-width: 650px; margin: 0 auto; line-height: 1.8; font-size: 1.1rem; }
 
-        /* STATS */
-        .stats-grid { 
-          display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; 
-          background: var(--card-bg); padding: 40px; border-radius: 20px; border: 1px solid var(--border);
-          text-align: center; margin-bottom: 80px;
+        /* CARDS / PROGRAMS GRID */
+        .grid-programs { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); 
+            gap: 25px; 
         }
-        .stat-num { font-size: 3rem; font-weight: 800; color: white; margin-bottom: 5px; }
-        .stat-label { color: var(--text-light); font-weight: 500; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .program-card { 
+          background: var(--card-bg); 
+          padding: 45px 35px; 
+          border-radius: 30px; 
+          border: 1px solid var(--border); 
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+          position: relative; 
+          overflow: hidden;
+          backdrop-filter: blur(10px);
+        }
+        .program-card:hover { 
+          transform: translateY(-15px); 
+          border-color: var(--primary); 
+          background: rgba(30, 41, 59, 0.9);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .program-card::after {
+          content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+          background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent);
+          pointer-events: none;
+        }
+        .icon-circle { 
+          width: 70px; height: 70px; background: rgba(59, 130, 246, 0.1); border-radius: 20px; 
+          display: flex; align-items: center; justify-content: center; font-size: 30px; 
+          color: var(--primary); margin-bottom: 30px; transition: 0.4s;
+        }
+        .program-card:hover .icon-circle {
+          background: var(--primary); color: white; transform: rotateY(360deg);
+        }
+        .pg-name { font-size: 22px; font-weight: 800; margin: 0 0 12px 0; color: white; font-family: 'Outfit', sans-serif; }
+        .pg-desc { color: var(--text-light); line-height: 1.6; font-size: 14px; }
 
-        /* CARDS */
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
-        .feature-card { 
-          background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border); 
-          transition: 0.3s; position: relative; overflow: hidden;
-        }
-        .feature-card:hover { transform: translateY(-8px); border-color: var(--primary); }
-        .icon-box { 
-          width: 55px; height: 55px; background: rgba(255,255,255,0.05); border-radius: 14px; 
-          display: flex; align-items: center; justify-content: center; font-size: 26px; 
-          color: var(--primary); margin-bottom: 25px; 
-        }
-
-        /* TESTIMONIALS */
-        .test-card { background: transparent; border: 1px solid var(--border); padding: 30px; border-radius: 20px; }
-        .quote-icon { color: var(--primary); font-size: 24px; margin-bottom: 15px; opacity: 0.5; }
-        .test-text { font-style: italic; color: var(--text-light); line-height: 1.6; margin-bottom: 20px; }
-        .user-info { display: flex; align-items: center; gap: 12px; }
-        .user-avatar { width: 40px; height: 40px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
-
-        /* --- PARTNERS SECTION (NEW) --- */
-        .partners-section { 
-          text-align: center; padding: 60px 20px; border-top: 1px solid var(--border); background: #0b1120;
-        }
-        .partners-title { font-size: 14px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 40px; }
-        .partners-grid { 
-          display: flex; justify-content: center; align-items: center; gap: 60px; flex-wrap: wrap; opacity: 0.7; 
-        }
+        /* PARTNERS */
+        .partners-section { text-align: center; padding: 80px 20px; background: rgba(2, 6, 23, 0.5); }
+        .partners-grid { display: flex; justify-content: center; align-items: center; gap: 80px; flex-wrap: wrap; }
         .partner-logo { 
-          display: flex; align-items: center; gap: 12px; 
-          font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 28px; 
-          color: #64748b; transition: 0.3s; cursor: pointer;
+          display: flex; align-items: center; gap: 15px; 
+          font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 30px; 
+          color: #475569; transition: 0.4s; grayscale: 100%;
         }
-        .partner-logo:hover { color: white; transform: scale(1.05); opacity: 1; }
-        
-        .p-typsy:hover { color: #f59e0b; }
-        .p-qualifi:hover { color: #06b6d4; }
-        .p-master:hover { color: #ef4444; }
-        .p-cth:hover { color: #8b5cf6; }
-
-        /* CTA */
-        .cta-section {
-          background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-          border-radius: 30px; padding: 60px; text-align: center; margin: 80px 20px;
-          position: relative; overflow: hidden;
-        }
-        .cta-bg-icon { position: absolute; font-size: 300px; color: white; opacity: 0.05; right: -50px; bottom: -50px; }
+        .partner-logo:hover { color: white; grayscale: 0%; transform: scale(1.1); }
 
         /* FOOTER */
-        .footer { border-top: 1px solid var(--border); padding: 50px 20px; background: #020617; text-align: center; }
-        .footer-links { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; }
-        .f-link { color: var(--text-light); text-decoration: none; transition: 0.2s; }
-        .f-link:hover { color: white; }
-
+        .footer { border-top: 1px solid var(--border); padding: 70px 20px; background: #020617; text-align: center; }
+        
         @media(max-width: 768px) { 
-          .hero-title { font-size: 2.5rem; } 
-          .navbar { padding: 15px 20px; flex-direction: column; gap: 15px; }
-          .stats-grid { grid-template-columns: 1fr; }
-          .partners-grid { gap: 30px; flex-direction: column; }
+          .hero-title { font-size: 2.8rem; } 
+          .navbar { padding: 15px 20px; }
+          .partners-grid { gap: 40px; }
         }
       `}</style>
 
-      {/* --- BACKGROUND GLOW --- */ }
       <div className="glow-bg"></div>
 
       {/* --- NAVBAR --- */}
       <nav className="navbar">
-        <div style={{display:'flex', alignItems:'center', gap:12}}>
+        <div style={{display:'flex', alignItems:'center', gap:15}}>
           <img src={logo} alt="COTHM Logo" className="logo-img" /> 
           <span className="logo-text">COTHM RESEARCH PORTAL</span>
         </div>
-        <div style={{display:'flex', gap:25}} className="desktop-only">
-          <a href="#features" className="nav-link">Features</a>
-          <a href="#programs" className="nav-link">Programs</a>
-          <a href="#research" className="nav-link">Research</a>
+        <div style={{display:'flex', gap:30}} className="desktop-only">
+          <a href="#programs" className="nav-link">Our Courses</a>
+          <a href="#features" className="nav-link">Portal Features</a>
+          <a href="#research" className="nav-link">Statistics</a>
         </div>
-        <div style={{display:'flex', gap:12}}>
+        <div style={{display:'flex', gap:15}}>
           <Link to="/login" className="nav-btn login-btn"><FaSignInAlt/> Login</Link>
-          <Link to="/signup" className="nav-btn signup-btn"><FaUserPlus/> Apply Now</Link>
+          <Link to="/signup" className="nav-btn signup-btn"><FaUserPlus/> Join Now</Link>
         </div>
       </nav>
 
       {/* --- HERO SECTION --- */}
       <section className="hero">
-        <span className="badge">🎓 Empowering Education Through Innovation</span>
-        <h1 className="hero-title">The Future of <br/> Academic <span style={{color:'#60a5fa'}}>Excellence.</span></h1>
+        <span className="badge">✨ Excellence in Hospitality & Culinary Arts</span>
+        <h1 className="hero-title">Research Beyond <br/> the <span style={{color:'#60a5fa'}}>Horizon.</span></h1>
         <p className="hero-sub">
-          COTHM's official research portal streamlines thesis submissions, 
-          enhances faculty collaboration, and provides real-time academic tracking for students.
+          The specialized research management platform for COTHM's leading programs. 
+          Manage your culinary insights and hospitality theses with precision.
         </p>
         <div className="cta-group">
-          <Link to="/signup" className="hero-btn btn-primary">Start Research <FaArrowRight/></Link>
-          <a href="#features" className="hero-btn btn-outline">Explore Features</a>
+          <Link to="/signup" className="hero-btn btn-primary">Get Started <FaArrowRight/></Link>
+          <a href="#programs" className="hero-btn btn-outline">Explore Programs</a>
+        </div>
+      </section>
+
+      {/* --- PROGRAMS SECTION (CORRECTED) --- */}
+      <section className="section" id="programs">
+        <div className="section-header">
+          <h2 className="section-title">Academic Programs</h2>
+          <p className="section-desc">Pioneering excellence across our core specialized certifications and diplomas.</p>
+        </div>
+        <div className="grid-programs">
+          <div className="program-card">
+            <div className="icon-circle"><FaAward/></div>
+            <h3 className="pg-name">GDICA</h3>
+            <p className="pg-desc">Graduate Diploma in International Culinary Arts. Master the world-class culinary techniques.</p>
+          </div>
+          <div className="program-card">
+            <div className="icon-circle"><FaUtensils/></div>
+            <h3 className="pg-name">DCA</h3>
+            <p className="pg-desc">Diploma in Culinary Arts. The foundation for professional chefs and culinary experts.</p>
+          </div>
+          <div className="program-card">
+            <div className="icon-circle"><FaHotel/></div>
+            <h3 className="pg-name">DIHO</h3>
+            <p className="pg-desc">Diploma in International Hotel Operations. Excellence in global hospitality standards.</p>
+          </div>
+          <div className="program-card">
+            <div className="icon-circle"><FaConciergeBell/></div>
+            <h3 className="pg-name">DHTML</h3>
+            <p className="pg-desc">Diploma in Hospitality and Tourism Management Management. Leading the future of travel.</p>
+          </div>
         </div>
       </section>
 
       {/* --- STATS --- */}
-      <section className="section" id="research">
-        <div className="stats-grid">
-          <div><div className="stat-num">5,000+</div><div className="stat-label">Students Enrolled</div></div>
-          <div><div className="stat-num">1,200+</div><div className="stat-label">Research Papers</div></div>
-          <div><div className="stat-num">150+</div><div className="stat-label">Expert Faculty</div></div>
-          <div><div className="stat-num">25+</div><div className="stat-label">Global Partners</div></div>
+      <section className="section" id="research" style={{paddingTop: 0}}>
+        <div style={{ 
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '30px', 
+          background: 'linear-gradient(rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4))', padding: '60px', 
+          borderRadius: '40px', border: '1px solid var(--border)', textAlign: 'center'
+        }}>
+          <div><div style={{fontSize: '3.5rem', fontWeight: 800}}>8,000+</div><div style={{color:'var(--text-light)', fontWeight:600, fontSize:14, textTransform:'uppercase'}}>Alumni</div></div>
+          <div><div style={{fontSize: '3.5rem', fontWeight: 800}}>1,500+</div><div style={{color:'var(--text-light)', fontWeight:600, fontSize:14, textTransform:'uppercase'}}>Active Researchers</div></div>
+          <div><div style={{fontSize: '3.5rem', fontWeight: 800}}>98%</div><div style={{color:'var(--text-light)', fontWeight:600, fontSize:14, textTransform:'uppercase'}}>Success Rate</div></div>
+          <div><div style={{fontSize: '3.5rem', fontWeight: 800}}>35+</div><div style={{color:'var(--text-light)', fontWeight:600, fontSize:14, textTransform:'uppercase'}}>Global Affiliations</div></div>
         </div>
       </section>
 
-      {/* --- FEATURES --- */}
-      <section className="section" id="features">
-        <div className="section-header">
-          <h2 className="section-title">Why Choose COTHM?</h2>
-          <p className="section-desc">We provide world-class tools to ensure your academic success is seamless and secure.</p>
-        </div>
-        <div className="grid-3">
-          <div className="feature-card">
-            <div className="icon-box" style={{color:'#60a5fa'}}><FaRocket/></div>
-            <h3 style={{color:'white', marginBottom:10}}>Smart Submissions</h3>
-            <p style={{color:'var(--text-light)', lineHeight:1.6}}>Drag & drop your research papers. Our intelligent system organizes versions automatically.</p>
-          </div>
-          <div className="feature-card">
-            <div className="icon-box" style={{color:'#a78bfa'}}><FaShieldAlt/></div>
-            <h3 style={{color:'white', marginBottom:10}}>Secure & Private</h3>
-            <p style={{color:'var(--text-light)', lineHeight:1.6}}>Enterprise-grade encryption keeps your intellectual property safe and confidential.</p>
-          </div>
-          <div className="feature-card">
-            <div className="icon-box" style={{color:'#34d399'}}><FaChartLine/></div>
-            <h3 style={{color:'white', marginBottom:10}}>Live Tracking</h3>
-            <p style={{color:'var(--text-light)', lineHeight:1.6}}>Get real-time notifications for approvals, feedback, and upcoming submission dates.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* --- PROGRAMS --- */}
-      <section className="section" id="programs">
-        <div className="section-header">
-          <h2 className="section-title">Our Programs</h2>
-          <p className="section-desc">Diverse faculties fostering innovation and practical skills.</p>
-        </div>
-        <div className="grid-3">
-          <div className="feature-card" style={{borderColor: 'var(--border)'}}>
-            <FaLaptopCode size={40} style={{marginBottom:20, color:'#3b82f6'}}/>
-            <h3 style={{color:'white'}}>Computer Science</h3>
-            <p style={{color:'var(--text-light)'}}>AI, Data Science, and Software Engineering tracks available.</p>
-          </div>
-          <div className="feature-card" style={{borderColor: 'var(--border)'}}>
-            <FaGlobe size={40} style={{marginBottom:20, color:'#f59e0b'}}/>
-            <h3 style={{color:'white'}}>Hospitality Management</h3>
-            <p style={{color:'var(--text-light)'}}>World-renowned training for the global tourism industry.</p>
-          </div>
-          <div className="feature-card" style={{borderColor: 'var(--border)'}}>
-            <FaUniversity size={40} style={{marginBottom:20, color:'#10b981'}}/>
-            <h3 style={{color:'white'}}>Business Administration</h3>
-            <p style={{color:'var(--text-light)'}}>Leadership, Finance, and Marketing for future CEOs.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* --- TESTIMONIALS --- */}
-      <section className="section">
-        <div className="section-header">
-          <h2 className="section-title">Faculty Voices</h2>
-        </div>
-        <div className="grid-3">
-          <div className="test-card">
-            <FaQuoteLeft className="quote-icon"/>
-            <p className="test-text">"This portal has revolutionized how we grade theses. The real-time feedback loop is a game changer for students."</p>
-            <div className="user-info">
-              <div className="user-avatar">DR</div>
-              <div><strong style={{display:'block'}}>Dr. Ahmed Khan</strong><span style={{fontSize:12, color:'var(--text-light)'}}>Dean of CS</span></div>
-            </div>
-          </div>
-          <div className="test-card">
-            <FaQuoteLeft className="quote-icon"/>
-            <p className="test-text">"Secure, fast, and reliable. It allows us to focus on research quality rather than administrative paperwork."</p>
-            <div className="user-info">
-              <div className="user-avatar">MS</div>
-              <div><strong style={{display:'block'}}>Ms. Sarah Ali</strong><span style={{fontSize:12, color:'var(--text-light)'}}>Senior Lecturer</span></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --- CTA --- */}
-      <div className="cta-section">
-        <FaUniversity className="cta-bg-icon"/>
-        <h2 style={{fontSize:'2.5rem', marginBottom:20, position:'relative'}}>Ready to Begin?</h2>
-        <p style={{marginBottom:30, opacity:0.9, position:'relative'}}>Join thousands of students achieving academic excellence with COTHM.</p>
-        <Link to="/signup" style={{background:'white', color:'#2563eb', padding:'15px 40px', borderRadius:50, textDecoration:'none', fontWeight:'bold', fontSize:18, position:'relative'}}>Apply Now</Link>
-      </div>
-
-      {/* --- NEW PARTNERS SECTION --- */}
+      {/* --- PARTNERS --- */}
       <section className="partners-section">
-        <div className="partners-title">Our Strategic Partners</div>
+        <div style={{color:'var(--text-light)', fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:3, marginBottom:50}}>Recognized By Global Leaders</div>
         <div className="partners-grid">
-          <div className="partner-logo p-typsy"><FaVideo/> typsy</div>
-          <div className="partner-logo p-qualifi"><FaAward/> QUALIFI</div>
-          <div className="partner-logo p-master"><FaUtensils/> MasterChef</div>
-          <div className="partner-logo p-cth"><FaCertificate/> CTH UK</div>
+          <div className="partner-logo"><FaVideo color="#f59e0b"/> typsy</div>
+          <div className="partner-logo"><FaAward color="#06b6d4"/> QUALIFI</div>
+          <div className="partner-logo"><FaUtensils color="#ef4444"/> MasterChef</div>
+          <div className="partner-logo"><FaCertificate color="#8b5cf6"/> CTH UK</div>
         </div>
       </section>
 
       {/* --- FOOTER --- */}
       <footer className="footer">
-        <div style={{display:'flex', justifyContent:'center', alignItems:'center', gap:10, marginBottom:30}}>
-          <img src={logo} alt="Logo" style={{height:30}}/>
-          <span style={{fontWeight:800, fontSize:18, color:'white'}}>COTHM</span>
+        <div style={{display:'flex', justifyContent:'center', alignItems:'center', gap:10, marginBottom:40}}>
+          <img src={logo} alt="Logo" style={{height:35}}/>
+          <span style={{fontWeight:800, fontSize:22, color:'white', fontFamily:'Outfit'}}>COTHM</span>
         </div>
-        <div className="footer-links">
-          <a href="#" className="f-link">About Us</a>
-          <a href="#" className="f-link">Admissions</a>
-          <a href="#" className="f-link">Research</a>
-          <a href="#" className="f-link">Contact</a>
+        <div style={{display:'flex', justifyContent:'center', gap:40, marginBottom:40, flexWrap:'wrap'}}>
+          <a href="#" className="f-link">Campus Life</a>
+          <a href="#" className="f-link">Research Ethics</a>
+          <a href="#" className="f-link">Student Support</a>
           <a href="#" className="f-link">Privacy Policy</a>
         </div>
-        <p style={{color:'var(--text-light)', fontSize:12}}>© 2026 COTHM International. All rights reserved.</p>
+        <p style={{color:'var(--text-light)', fontSize:13}}>© 2026 COTHM International. Empowering hospitality leaders globally.</p>
       </footer>
     </div>
   );

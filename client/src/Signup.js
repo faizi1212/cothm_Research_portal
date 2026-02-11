@@ -5,7 +5,8 @@ import { FaUser, FaEnvelope, FaLock, FaIdCard, FaGraduationCap, FaArrowLeft } fr
 import logo from "./logo.png"; 
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", password: "", course: "Computer Science", batchNumber: "" });
+  // ✅ UPDATED: Default course set to "DIHO"
+  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", password: "", course: "DIHO", batchNumber: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const API_URL = "https://cothm-research-portal.onrender.com";
@@ -85,7 +86,14 @@ const Signup = () => {
             </div>
             <div style={{position:'relative'}}><FaEnvelope className="input-icon" /><input className="form-input" placeholder="Student Email" onChange={e=>setFormData({...formData, email:e.target.value})} required /></div>
             <div style={{display: 'flex', gap: 15}}>
-              <div style={{position:'relative', flex:1}}><FaGraduationCap className="input-icon" /><select className="form-input" onChange={e=>setFormData({...formData, course:e.target.value})}><option>Computer Science</option><option>IT</option><option>Software Eng</option></select></div>
+              <div style={{position:'relative', flex:1}}>
+                <FaGraduationCap className="input-icon" />
+                {/* ✅ UPDATED: Corrected Courses for DIHO/DHTML */}
+                <select className="form-input" onChange={e=>setFormData({...formData, course:e.target.value})}>
+                  <option value="DIHO">DIHO</option>
+                  <option value="DHTML">DHTML</option>
+                </select>
+              </div>
               <div style={{position:'relative', flex:1}}><FaIdCard className="input-icon" /><input className="form-input" placeholder="Batch No" onChange={e=>setFormData({...formData, batchNumber:e.target.value})} required /></div>
             </div>
             
